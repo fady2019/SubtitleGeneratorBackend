@@ -114,6 +114,20 @@ SignUpValidatorSchema = Schema(
     },
 )
 
+LoginValidatorSchema = Schema(
+    {
+        Required("username_or_email", msg="the username/email is required"): All(
+            Coerce(str, msg="the username/email should be string"),
+            trim,
+        ),
+        Required("password", msg="the password is required"): Coerce(str, msg="the password should be string"),
+    }
+)
+
 
 def singup_validator(data):
     validator_executor(SignUpValidatorSchema, data)
+
+
+def login_validator(data):
+    validator_executor(LoginValidatorSchema, data)

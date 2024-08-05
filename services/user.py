@@ -1,11 +1,9 @@
-from sqlalchemy import BinaryExpression
-import typing
-
+from .shared import TFilter, Service
 from db.user import User
 from db.db_config import create_session
 
 
-class UserService:
+class UserService(Service):
     @staticmethod
     def create_user(data: dict):
         session = create_session()()
@@ -29,7 +27,7 @@ class UserService:
         return user
 
     @staticmethod
-    def find_first_by(filter: typing.Callable[..., typing.Callable[[], BinaryExpression[bool]]]):
+    def find_first_by(filter: TFilter):
         session = create_session()()
 
         user = None

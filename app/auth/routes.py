@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 
 from services.auth import AuthService
-from validation.auth import singup_validator
+from validation.auth import singup_validator, login_validator
 from decorators.input_validator import input_validator
 from decorators.input_validator.input_source import RequestJson
 from decorators.security.jwt import sign_token
@@ -16,3 +16,11 @@ auth_blueprint = Blueprint("auth", __name__, url_prefix="/auth")
 def signup():
     user_data = AuthService.signup(request.json)
     return jsonify(user_data)
+
+
+@auth_blueprint.route("/login", methods=["POST"])
+@input_validator(input_source=RequestJson(), validator=login_validator)
+@sign_token
+def login():
+    user_date = AuthService.login(request.json)
+    return jsonify(user_date)
