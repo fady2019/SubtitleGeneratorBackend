@@ -28,3 +28,8 @@ class AuthService(Service):
             raise ResponseError("invalid credentials, please try again with the valid ones", status_code=401)
 
         return user_row.to_dict(include_email=True)
+
+    @staticmethod
+    def auto_login(user_id: str):
+        user_row = UserService.find_first_by(UserService.id_filter(user_id))
+        return user_row.to_dict(include_email=True)

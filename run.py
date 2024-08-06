@@ -1,5 +1,5 @@
 from dotenv import load_dotenv
-import inspect
+import inspect, os
 
 load_dotenv()
 
@@ -20,4 +20,7 @@ for rule in app.url_map.iter_rules():
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    SERVER_HOST = os.getenv("SERVER_HOST")
+    SERVER_POST = os.getenv("SERVER_POST")
+
+    app.run(debug=True, host=SERVER_HOST, port=SERVER_POST)

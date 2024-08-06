@@ -1,11 +1,14 @@
-from flask import Response
+from flask import Response, request, g
 from functools import wraps
 import jwt, datetime, os, base64, typing
+
+from helpers.cookies import set_cookie
+from exceptions.response_error import ResponseError
+
 
 JWT_EXP = int(os.getenv("JWT_EXP_IN_HOURS") or 1)
 JWT_PUBLIC_KEY = base64.b64decode(os.getenv("JWT_PUBLIC_KEY")).decode()
 JWT_PRIVATE_KEY = base64.b64decode(os.getenv("JWT_PRIVATE_KEY")).decode()
-SECONDS_IN_HOUR = 3600
 
 
 def sign_token(f: typing.Callable[..., Response]):
@@ -25,8 +28,34 @@ def sign_token(f: typing.Callable[..., Response]):
             algorithm="RS256",
         )
 
-        response.set_cookie("token", token, expires=jwt_exp, httponly=True)
+        set_cookie(response, "token", token, expires=jwt_exp)
 
         return response
 
     return decorated_function
+
+
+def validate_token(ignore_exp=False, ignore_invalid_token=False):
+    def decorator(f: typing.Callable[..., Response]):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            try:
+                token = request.cookies.get("token", "")
+
+                payload = jwt.decode(token, key=JWT_PUBLIC_KEY, algorithms="RS256")
+
+                exp_date = datetime.datetime.fromtimestamp(payload["exp"] or 0)
+
+                if not ignore_exp and exp_date <= datetime.datetime.now():
+                    raise Exception()
+
+                g.user_id = payload["id"]
+            except:
+                if not ignore_invalid_token:
+                    raise ResponseError("forbidden", status_code=403)
+
+            return f(*args, **kwargs)
+
+        return decorated_function
+
+    return decorator

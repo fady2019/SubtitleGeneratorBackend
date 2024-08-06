@@ -13,7 +13,7 @@ def create_app():
 
     CORS(
         app,
-        resources={r"/api/*": {"origins": api_origin_list}},
+        resources={r"/api/*": {"supports_credentials": True, "origins": api_origin_list}},
     )
 
     api_blueprint = Blueprint("api", __name__, url_prefix="/api")

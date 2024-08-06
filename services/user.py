@@ -44,3 +44,7 @@ class UserService(Service):
     @staticmethod
     def username_filter(username: str):
         return lambda: User.username.ilike(username)
+
+    @staticmethod
+    def id_filter(id: str):
+        return lambda: User.id == id

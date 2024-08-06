@@ -1,10 +1,10 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, g, jsonify
 
 from services.auth import AuthService
 from validation.auth import singup_validator, login_validator
 from decorators.input_validator import input_validator
 from decorators.input_validator.input_source import RequestJson
-from decorators.security.jwt import sign_token
+from decorators.security.jwt import sign_token, validate_token
 
 
 auth_blueprint = Blueprint("auth", __name__, url_prefix="/auth")
@@ -24,3 +24,15 @@ def signup():
 def login():
     user_date = AuthService.login(request.json)
     return jsonify(user_date)
+
+
+@auth_blueprint.route("/auto-login", methods=["POST"])
+@validate_token(ignore_invalid_token=True)
+def auto_login():
+    user_id = g.get("user_id")
+
+    if not user_id:
+        return jsonify()
+
+    user_data = AuthService.auto_login(user_id)
+    return jsonify(user_data)
