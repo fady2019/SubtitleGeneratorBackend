@@ -18,3 +18,13 @@ def set_cookie(response: Response, key: str, value: str, expires: str | datetime
         secure=COOKIE_SECURE,
         domain=COOKIE_DOMAIN,
     )
+
+
+def delete_cookie(response: Response, key: str):
+    response.delete_cookie(
+        key=key,
+        httponly=COOKIE_HTTP_ONLY,
+        samesite=COOKIE_SAME_SITE,
+        secure=COOKIE_SECURE,
+        domain=COOKIE_DOMAIN,
+    )

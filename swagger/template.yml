@@ -1,0 +1,123 @@
+openapi: 3.0.3
+info:
+    title: CS50x Subtitle Generator
+    description: CS50x Subtitle Generator APIs
+    version: 1.0.0
+    contact:
+        name: Fady Emad
+        url: https://github.com/fady2019
+components:
+    schemas:
+        SignUpInput:
+            type: object
+            required:
+                - first_name
+                - last_name
+                - username
+                - email
+                - password
+            properties:
+                first_name:
+                    type: string
+                last_name:
+                    type: string
+                username:
+                    type: string
+                email:
+                    type: string
+                password:
+                    type: string
+        #
+        LoginInput:
+            type: object
+            required:
+                - username_or_email
+                - password
+            properties:
+                username_or_email:
+                    type: string
+                password:
+                    type: string
+        #
+        User:
+            type: object
+            properties:
+                id:
+                    type: string
+                first_name:
+                    type: string
+                last_name:
+                    type: string
+                username:
+                    type: string
+                email:
+                    type: string
+        #
+        ResponseError:
+            type: object
+            properties:
+                message:
+                    type: string
+    #
+    #
+    #
+    responses:
+        SuccessfulAuth:
+            description: Success
+            content:
+                application/json:
+                    schema:
+                        $ref: '#/components/schemas/User'
+        #
+        BadRequestError:
+            description: Bad Request
+            content:
+                application/json:
+                    schema:
+                        $ref: '#/components/schemas/ResponseError'
+        #
+        UnauthorizedError:
+            description: Unauthorized
+            content:
+                application/json:
+                    schema:
+                        $ref: '#/components/schemas/ResponseError'
+        #
+        ForbiddenError:
+            description: Forbidden
+            content:
+                application/json:
+                    schema:
+                        $ref: '#/components/schemas/ResponseError'
+        #
+        NotFoundError:
+            description: Not Found
+            content:
+                application/json:
+                    schema:
+                        $ref: '#/components/schemas/ResponseError'
+        #
+        ConflictError:
+            description: Conflict
+            content:
+                application/json:
+                    schema:
+                        $ref: '#/components/schemas/ResponseError'
+        #
+        UnprocessableEntityError:
+            description: Unprocessable Entity
+            content:
+                application/json:
+                    schema:
+                        $ref: '#/components/schemas/ResponseError'
+        #
+        ServerError:
+            description: Server Issue
+            content:
+                application/json:
+                    schema:
+                        $ref: '#/components/schemas/ResponseError'
+    #
+    #
+    #
+    # parameters:

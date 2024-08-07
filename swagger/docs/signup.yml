@@ -1,0 +1,22 @@
+tags:
+    - Authentication
+summary: User Registration
+description: Create a new account. Notice that performing this successfully leads to setting a cookie with a token for the current user.
+operationId: SignUp
+requestBody:
+    required: true
+    content:
+        application/json:
+            schema:
+                $ref: '#/components/schemas/SignUpInput'
+responses:
+    200:
+        $ref: '#/components/responses/SuccessfulAuth'
+    400:
+        $ref: '#/components/responses/BadRequestError'
+    409:
+        $ref: '#/components/responses/ConflictError'
+    422:
+        $ref: '#/components/responses/UnprocessableEntityError'
+    5xx:
+        $ref: '#/components/responses/ServerError'

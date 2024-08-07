@@ -4,7 +4,7 @@ from services.auth import AuthService
 from validation.auth import singup_validator, login_validator
 from decorators.input_validator import input_validator
 from decorators.input_validator.input_source import RequestJson
-from decorators.security.jwt import sign_token, validate_token
+from decorators.security.jwt import sign_token, validate_token, unsign_token
 
 
 auth_blueprint = Blueprint("auth", __name__, url_prefix="/auth")
@@ -26,7 +26,7 @@ def login():
     return jsonify(user_date)
 
 
-@auth_blueprint.route("/auto-login", methods=["POST"])
+@auth_blueprint.route("/auto-login")
 @validate_token(ignore_invalid_token=True)
 def auto_login():
     user_id = g.get("user_id")
@@ -36,3 +36,9 @@ def auto_login():
 
     user_data = AuthService.auto_login(user_id)
     return jsonify(user_data)
+
+
+@auth_blueprint.route("/logout")
+@unsign_token
+def logout():
+    return jsonify()

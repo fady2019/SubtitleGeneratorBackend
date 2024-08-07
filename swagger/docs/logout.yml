@@ -1,0 +1,10 @@
+tags:
+    - Authentication
+summary: User Logout
+description: Clear the token cookie.
+operationId: Logout
+responses:
+    200:
+        description: Success
+    5xx:
+        $ref: '#/components/responses/ServerError'

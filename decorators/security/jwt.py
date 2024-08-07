@@ -2,13 +2,14 @@ from flask import Response, request, g
 from functools import wraps
 import jwt, datetime, os, base64, typing
 
-from helpers.cookies import set_cookie
+from helpers.cookies import set_cookie, delete_cookie
 from exceptions.response_error import ResponseError
 
 
 JWT_EXP = int(os.getenv("JWT_EXP_IN_HOURS") or 1)
 JWT_PUBLIC_KEY = base64.b64decode(os.getenv("JWT_PUBLIC_KEY")).decode()
 JWT_PRIVATE_KEY = base64.b64decode(os.getenv("JWT_PRIVATE_KEY")).decode()
+JWT_TOKEN_COOKIE_NAME = os.getenv("JWT_TOKEN_COOKIE_NAME", "token")
 
 
 def sign_token(f: typing.Callable[..., Response]):
@@ -28,7 +29,7 @@ def sign_token(f: typing.Callable[..., Response]):
             algorithm="RS256",
         )
 
-        set_cookie(response, "token", token, expires=jwt_exp)
+        set_cookie(response, JWT_TOKEN_COOKIE_NAME, token, expires=jwt_exp)
 
         return response
 
@@ -40,7 +41,7 @@ def validate_token(ignore_exp=False, ignore_invalid_token=False):
         @wraps(f)
         def decorated_function(*args, **kwargs):
             try:
-                token = request.cookies.get("token", "")
+                token = request.cookies.get(JWT_TOKEN_COOKIE_NAME, "")
 
                 payload = jwt.decode(token, key=JWT_PUBLIC_KEY, algorithms="RS256")
 
@@ -59,3 +60,13 @@ def validate_token(ignore_exp=False, ignore_invalid_token=False):
         return decorated_function
 
     return decorator
+
+
+def unsign_token(f: typing.Callable[..., Response]):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        response = f(*args, **kwargs)
+        delete_cookie(response, JWT_TOKEN_COOKIE_NAME)
+        return response
+
+    return decorated_function

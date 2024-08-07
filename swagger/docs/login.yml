@@ -1,0 +1,22 @@
+tags:
+    - Authentication
+summary: User Login
+description: Access an existing account. Notice that performing this successfully leads to setting a cookie with a token for the current user.
+operationId: Login
+requestBody:
+    required: true
+    content:
+        application/json:
+            schema:
+                $ref: '#/components/schemas/LoginInput'
+responses:
+    200:
+        $ref: '#/components/responses/SuccessfulAuth'
+    400:
+        $ref: '#/components/responses/BadRequestError'
+    401:
+        $ref: '#/components/responses/UnauthorizedError'
+    422:
+        $ref: '#/components/responses/UnprocessableEntityError'
+    5xx:
+        $ref: '#/components/responses/ServerError'
