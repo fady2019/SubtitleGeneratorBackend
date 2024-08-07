@@ -39,6 +39,17 @@ components:
                 password:
                     type: string
         #
+        ChangePasswordInput:
+            type: object
+            required:
+                - current_password
+                - new_password
+            properties:
+                current_password:
+                    type: string
+                new_password:
+                    type: string
+        #
         User:
             type: object
             properties:

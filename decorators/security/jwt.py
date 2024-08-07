@@ -62,11 +62,19 @@ def validate_token(ignore_exp=False, ignore_invalid_token=False):
     return decorator
 
 
-def unsign_token(f: typing.Callable[..., Response]):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        response = f(*args, **kwargs)
-        delete_cookie(response, JWT_TOKEN_COOKIE_NAME)
-        return response
+def unsign_token(only_if: typing.Callable[[Response], bool] = None):
+    def decorator(f: typing.Callable[..., Response]):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            response = f(*args, **kwargs)
 
-    return decorated_function
+            print(response.json)
+
+            if not only_if or only_if(response):
+                delete_cookie(response, JWT_TOKEN_COOKIE_NAME)
+
+            return response
+
+        return decorated_function
+
+    return decorator

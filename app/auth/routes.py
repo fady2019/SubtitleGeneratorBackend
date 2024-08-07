@@ -1,7 +1,7 @@
 from flask import Blueprint, request, g, jsonify
 
 from services.auth import AuthService
-from validation.auth import singup_validator, login_validator
+from validation.auth import singup_validator, login_validator, change_password_validator
 from decorators.input_validator import input_validator
 from decorators.input_validator.input_source import RequestJson
 from decorators.security.jwt import sign_token, validate_token, unsign_token
@@ -28,17 +28,23 @@ def login():
 
 @auth_blueprint.route("/auto-login")
 @validate_token(ignore_invalid_token=True)
+@unsign_token(only_if=lambda res: not res.json)  # clear the cookie of the token if no response (invalid token)
 def auto_login():
     user_id = g.get("user_id")
-
-    if not user_id:
-        return jsonify()
-
     user_data = AuthService.auto_login(user_id)
     return jsonify(user_data)
 
 
 @auth_blueprint.route("/logout")
-@unsign_token
+@unsign_token()
 def logout():
+    return jsonify()
+
+
+@auth_blueprint.route("/change-password", methods=["PUT"])
+@validate_token()
+@input_validator(input_source=RequestJson(), validator=change_password_validator)
+def change_password():
+    user_id = g.get("user_id")
+    AuthService.change_password(user_id, data=request.json)
     return jsonify()

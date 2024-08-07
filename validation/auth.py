@@ -124,6 +124,20 @@ LoginValidatorSchema = Schema(
     }
 )
 
+ChangePasswordValidatorSchema = Schema(
+    {
+        Required("current_password", msg="the current password is required"): All(
+            Coerce(str, msg="the current password should be string"),
+            trim,
+        ),
+        Required("new_password", msg="the new password is required"): All(
+            Coerce(str, msg="the new password should be string"),
+            Length(min=8, max=32, msg="the new password should be between 8 and 32 characters"),
+            valid_password("new password"),
+        ),
+    }
+)
+
 
 def singup_validator(data):
     validator_executor(SignUpValidatorSchema, data)
@@ -131,3 +145,7 @@ def singup_validator(data):
 
 def login_validator(data):
     validator_executor(LoginValidatorSchema, data)
+
+
+def change_password_validator(data):
+    validator_executor(ChangePasswordValidatorSchema, data)
