@@ -4,7 +4,7 @@ from services.auth import AuthService
 from validation.auth import singup_validator, login_validator, change_password_validator
 from decorators.input_validator import input_validator
 from decorators.input_validator.input_source import RequestJson
-from decorators.security.jwt import sign_token, validate_token, unsign_token
+from decorators.security.auth_token import sign_token, validate_token, unsign_token
 
 
 auth_blueprint = Blueprint("auth", __name__, url_prefix="/auth")
@@ -12,7 +12,7 @@ auth_blueprint = Blueprint("auth", __name__, url_prefix="/auth")
 
 @auth_blueprint.route("/sign-up", methods=["POST"])
 @input_validator(input_source=RequestJson(), validator=singup_validator)
-@sign_token
+@sign_token(get_payload=lambda res: {"id": res.json["id"]})
 def signup():
     user_data = AuthService.signup(request.json)
     return jsonify(user_data)
@@ -20,7 +20,7 @@ def signup():
 
 @auth_blueprint.route("/login", methods=["POST"])
 @input_validator(input_source=RequestJson(), validator=login_validator)
-@sign_token
+@sign_token(get_payload=lambda res: {"id": res.json["id"]})
 def login():
     user_date = AuthService.login(request.json)
     return jsonify(user_date)
