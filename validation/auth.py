@@ -3,7 +3,9 @@ import regex as re
 
 from validation.shared import CustomInvalid, validator_executor
 from validation.transformers import trim
-from services.user import UserService
+from db.repositories.user import UserRepository
+
+user_repo = UserRepository()
 
 
 def valid_name(field_placeholder: str):
@@ -18,8 +20,11 @@ def valid_name(field_placeholder: str):
 
 def valid_username(field_placeholder: str):
     def validator(username: str):
-        if not bool(re.match(r"^[a-zA-Z0-9_]+$", username)):
+        if not bool(re.match(r"^\w+$", username)):
             raise Invalid(f"invalid {field_placeholder}, it should only contain english letters, digits or/and underscore")
+
+        if not bool(re.match(r"^[a-zA-Z].*$", username)):
+            raise Invalid(f"invalid {field_placeholder}, it should start with english letters")
 
         return username
 
@@ -28,7 +33,7 @@ def valid_username(field_placeholder: str):
 
 def unique_username(field_placeholder: str):
     def validator(username: str):
-        if UserService.find_first_by(UserService.username_filter(username)) != None:
+        if user_repo.find_first(user_repo.username_filter(username)) != None:
             raise CustomInvalid(message=f"the {field_placeholder} should be unique", status_code=409)
 
         return username
@@ -50,7 +55,7 @@ def valid_email(field_placeholder: str):
 
 def unique_email(field_placeholder: str):
     def validator(email: str):
-        if UserService.find_first_by(UserService.email_filter(email)) != None:
+        if user_repo.find_first(user_repo.email_filter(email)) != None:
             raise CustomInvalid(message=f"the {field_placeholder} should be unique", status_code=409)
 
         return email
@@ -124,18 +129,29 @@ LoginValidatorSchema = Schema(
     }
 )
 
-ChangePasswordValidatorSchema = Schema(
-    {
-        Required("current_password", msg="the current password is required"): All(
-            Coerce(str, msg="the current password should be string"),
-            trim,
-        ),
-        Required("new_password", msg="the new password is required"): All(
-            Coerce(str, msg="the new password should be string"),
-            Length(min=8, max=32, msg="the new password should be between 8 and 32 characters"),
-            valid_password("new password"),
-        ),
-    }
+
+def different_current_and_new_passwords(data):
+    if data["current_password"] == data["new_password"]:
+        raise Invalid("the new password must be different from the current password")
+
+    return data
+
+
+ChangePasswordValidatorSchema = All(
+    Schema(
+        {
+            Required("current_password", msg="the current password is required"): All(
+                Coerce(str, msg="the current password should be string"),
+                trim,
+            ),
+            Required("new_password", msg="the new password is required"): All(
+                Coerce(str, msg="the new password should be string"),
+                Length(min=8, max=32, msg="the new password should be between 8 and 32 characters"),
+                valid_password("new password"),
+            ),
+        },
+    ),
+    different_current_and_new_passwords,
 )
 
 

@@ -9,12 +9,14 @@ from decorators.security.auth_token import sign_token, validate_token, unsign_to
 
 auth_blueprint = Blueprint("auth", __name__, url_prefix="/auth")
 
+auth_service = AuthService()
+
 
 @auth_blueprint.route("/sign-up", methods=["POST"])
 @input_validator(input_source=RequestJson(), validator=singup_validator)
 @sign_token(get_payload=lambda res: {"id": res.json["id"]})
 def signup():
-    user_data = AuthService.signup(request.json)
+    user_data = auth_service.signup(request.json)
     return jsonify(user_data)
 
 
@@ -22,7 +24,7 @@ def signup():
 @input_validator(input_source=RequestJson(), validator=login_validator)
 @sign_token(get_payload=lambda res: {"id": res.json["id"]})
 def login():
-    user_date = AuthService.login(request.json)
+    user_date = auth_service.login(request.json)
     return jsonify(user_date)
 
 
@@ -30,8 +32,7 @@ def login():
 @validate_token(ignore_invalid_token=True)
 @unsign_token(only_if=lambda res: not res.json)  # clear the cookie of the token if no response (invalid token)
 def auto_login():
-    user_id = g.get("user_id")
-    user_data = AuthService.auto_login(user_id)
+    user_data = g.get("user")
     return jsonify(user_data)
 
 
@@ -45,6 +46,7 @@ def logout():
 @validate_token()
 @input_validator(input_source=RequestJson(), validator=change_password_validator)
 def change_password():
-    user_id = g.get("user_id")
-    AuthService.change_password(user_id, data=request.json)
+    user = g.get("user", {})
+    user_id = user.get("id", "")
+    auth_service.change_password(user_id, data=request.json)
     return jsonify()

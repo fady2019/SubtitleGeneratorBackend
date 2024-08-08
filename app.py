@@ -1,14 +1,29 @@
+from flask import Flask
+from flask_cors import CORS
 from dotenv import load_dotenv
 import inspect, os
 
 load_dotenv()
 
-from app import create_app
+from routes.api import api_blueprint
 from decorators.errors.app_error_handler import app_error_handler
 from swagger import config_swagger
 
 
-app = create_app()
+API_ALLOWED_ORIGIN = os.getenv("API_ALLOWED_ORIGINS") or "*"
+API_ORIGIN_LIST = [origin.strip() for origin in API_ALLOWED_ORIGIN.split(",")]
+
+
+app = Flask(__name__)
+
+CORS(
+    app,
+    resources={r"/api/*": {"supports_credentials": True, "origins": API_ORIGIN_LIST}},
+)
+
+app.register_blueprint(api_blueprint)
+
+
 config_swagger(app)
 
 # wrap all custom endpoint function with a decorator that handles the app errors
@@ -23,6 +38,7 @@ for rule in app.url_map.iter_rules():
 
 if __name__ == "__main__":
     SERVER_HOST = os.getenv("SERVER_HOST")
-    SERVER_POST = os.getenv("SERVER_POST")
+    SERVER_PORT = os.getenv("SERVER_PORT")
+    SERVER_DEBUG = os.getenv("SERVER_DEBUG", "true").lower() == "true"
 
-    app.run(debug=True, host=SERVER_HOST, port=SERVER_POST)
+    app.run(debug=SERVER_DEBUG, host=SERVER_HOST, port=SERVER_PORT)

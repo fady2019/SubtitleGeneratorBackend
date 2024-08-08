@@ -2,7 +2,7 @@ from flask import request
 from functools import wraps
 from typing import Set, Callable, Any
 
-from .input_source import InputSource
+from decorators.input_validator.input_source import InputSource
 
 
 def input_validator(input_source: InputSource, validator: Callable[[], Any], methods: Set[str] = {}):

@@ -1,7 +1,8 @@
 from flask import Response, request, g
 from functools import wraps
-import jwt, datetime, os, base64, typing
+import datetime, os, base64, typing
 
+from db.repositories.user import UserRepository
 from helpers.cookies import set_cookie, delete_cookie
 from helpers.jwt import generate_token_from_payload, extract_payload_from_token
 from exceptions.response_error import ResponseError
@@ -11,6 +12,8 @@ JWT_EXP = int(os.getenv("JWT_AUTH_TOKEN_EXP_IN_HOURS") or 1)
 JWT_PUBLIC_KEY = base64.b64decode(os.getenv("JWT_AUTH_TOKEN_PUBLIC_KEY")).decode()
 JWT_PRIVATE_KEY = base64.b64decode(os.getenv("JWT_AUTH_TOKEN_PRIVATE_KEY")).decode()
 JWT_TOKEN_COOKIE_NAME = os.getenv("JWT_AUTH_TOKEN_TOKEN_COOKIE_NAME", "token")
+
+user_repo = UserRepository()
 
 
 def sign_token(get_payload: typing.Callable[[Response], dict]):
@@ -43,7 +46,13 @@ def validate_token(ignore_exp=False, ignore_invalid_token=False):
 
                 payload = extract_payload_from_token(token, JWT_PUBLIC_KEY, ignore_exp=ignore_exp)
 
-                g.user_id = payload["id"]
+                user = user_repo.find_first(user_repo.id_filter(payload["id"]))
+
+                if not user:
+                    raise Exception()
+
+                del user["password"]
+                g.user = user
             except:
                 if not ignore_invalid_token:
                     raise ResponseError("forbidden", status_code=403)
