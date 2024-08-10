@@ -1,6 +1,7 @@
 from flask import Response, request, g
 from functools import wraps
-import datetime, os, base64, typing
+from typing import Callable, TypedDict
+import os, base64
 
 from db.repositories.user import UserRepository
 from helpers.cookies import set_cookie, delete_cookie
@@ -8,7 +9,7 @@ from helpers.jwt import generate_token_from_payload, extract_payload_from_token
 from exceptions.response_error import ResponseError
 
 
-JWT_EXP = int(os.getenv("JWT_AUTH_TOKEN_EXP_IN_HOURS") or 1)
+JWT_EXP_IN_HOURS = int(os.getenv("JWT_AUTH_TOKEN_EXP_IN_HOURS") or 1)
 JWT_PUBLIC_KEY = base64.b64decode(os.getenv("JWT_AUTH_TOKEN_PUBLIC_KEY")).decode()
 JWT_PRIVATE_KEY = base64.b64decode(os.getenv("JWT_AUTH_TOKEN_PRIVATE_KEY")).decode()
 JWT_TOKEN_COOKIE_NAME = os.getenv("JWT_AUTH_TOKEN_TOKEN_COOKIE_NAME", "token")
@@ -16,19 +17,21 @@ JWT_TOKEN_COOKIE_NAME = os.getenv("JWT_AUTH_TOKEN_TOKEN_COOKIE_NAME", "token")
 user_repo = UserRepository()
 
 
-def sign_token(get_payload: typing.Callable[[Response], dict]):
-    def decorator(f: typing.Callable[..., Response]):
+class Payload(TypedDict):
+    user_id: str
+
+
+def sign_token(get_payload: Callable[[Response], Payload]):
+    def decorator(f: Callable[..., Response]):
         @wraps(f)
         def decorated_function(*args, **kwargs):
             response = f(*args, **kwargs)
 
             payload = get_payload(response)
 
-            jwt_exp = datetime.datetime.now() + datetime.timedelta(hours=JWT_EXP)
+            token, expiration_date = generate_token_from_payload(payload, JWT_EXP_IN_HOURS, JWT_PRIVATE_KEY)
 
-            token = generate_token_from_payload(payload, jwt_exp, JWT_PRIVATE_KEY)
-
-            set_cookie(response, JWT_TOKEN_COOKIE_NAME, token, expires=jwt_exp)
+            set_cookie(response, JWT_TOKEN_COOKIE_NAME, token, expires=expiration_date)
 
             return response
 
@@ -38,15 +41,15 @@ def sign_token(get_payload: typing.Callable[[Response], dict]):
 
 
 def validate_token(ignore_exp=False, ignore_invalid_token=False):
-    def decorator(f: typing.Callable[..., Response]):
+    def decorator(f: Callable[..., Response]):
         @wraps(f)
         def decorated_function(*args, **kwargs):
             try:
                 token = request.cookies.get(JWT_TOKEN_COOKIE_NAME, "")
 
-                payload = extract_payload_from_token(token, JWT_PUBLIC_KEY, ignore_exp=ignore_exp)
+                payload: Payload = extract_payload_from_token(token, JWT_PUBLIC_KEY, ignore_exp=ignore_exp)
 
-                user = user_repo.find_first(user_repo.id_filter(payload["id"]))
+                user = user_repo.find_first(user_repo.id_filter(payload["user_id"]))
 
                 if not user:
                     raise Exception()
@@ -64,8 +67,8 @@ def validate_token(ignore_exp=False, ignore_invalid_token=False):
     return decorator
 
 
-def unsign_token(only_if: typing.Callable[[Response], bool] = None):
-    def decorator(f: typing.Callable[..., Response]):
+def unsign_token(only_if: Callable[[Response], bool] = None):
+    def decorator(f: Callable[..., Response]):
         @wraps(f)
         def decorated_function(*args, **kwargs):
             response = f(*args, **kwargs)

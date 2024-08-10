@@ -22,11 +22,17 @@ class FindWithErrorOptions(MethodOptions):
 
 def set_default_method_options(options: MethodOptions) -> MethodOptions:
     default = {"session": None}
-    default.update(options)
+
+    if options != None:
+        default.update(options)
+
     return default
 
 
 def set_default_find_with_error_options(options: FindWithErrorOptions) -> FindWithErrorOptions:
     default = {"session": None, "error_msg": ""}
-    default.update(options)
+
+    if options != None:
+        default.update(options)
+
     return default

@@ -1,4 +1,5 @@
-from sqlalchemy import Column, String, UUID
+from sqlalchemy import Column, String, UUID, Boolean
+from sqlalchemy.orm import relationship
 import uuid
 
 from db.db_config import Base, DB_ENGINE
@@ -12,6 +13,8 @@ class UserEntity(Base):
     username = Column(String, index=True, unique=True, nullable=False)
     email = Column(String, index=True, unique=True, nullable=False)
     password = Column(String, nullable=False)
+
+    temp_tokens = relationship("TemporaryTokenEntity", back_populates="user", cascade="all, delete-orphan")
 
 
 Base.metadata.create_all(bind=DB_ENGINE)

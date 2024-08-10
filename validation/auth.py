@@ -154,6 +154,28 @@ ChangePasswordValidatorSchema = All(
     different_current_and_new_passwords,
 )
 
+RequestPasswordResetValidatorSchema = Schema(
+    {
+        Required("email", msg="the email is required"): All(
+            Coerce(str, msg="the email should be string"),
+            trim,
+        )
+    },
+)
+
+PasswordResetValidatorSchema = Schema(
+    {
+        Required("new_password", msg="the new password is required"): All(
+            Coerce(str, msg="the new password should be string"),
+            Length(min=8, max=32, msg="the new password should be between 8 and 32 characters"),
+            valid_password("new password"),
+        ),
+        Required("token", msg="the token is required"): All(
+            Coerce(str, msg="the token should be string"),
+        ),
+    },
+)
+
 
 def singup_validator(data):
     validator_executor(SignUpValidatorSchema, data)
@@ -165,3 +187,11 @@ def login_validator(data):
 
 def change_password_validator(data):
     validator_executor(ChangePasswordValidatorSchema, data)
+
+
+def request_password_reset_validator(data):
+    validator_executor(RequestPasswordResetValidatorSchema, data)
+
+
+def password_reset_validator(data):
+    validator_executor(PasswordResetValidatorSchema, data)

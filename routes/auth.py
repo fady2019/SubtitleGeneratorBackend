@@ -1,7 +1,13 @@
 from flask import Blueprint, request, g, jsonify
 
 from services.auth import AuthService
-from validation.auth import singup_validator, login_validator, change_password_validator
+from validation.auth import (
+    singup_validator,
+    login_validator,
+    change_password_validator,
+    request_password_reset_validator,
+    password_reset_validator,
+)
 from decorators.input_validator import input_validator
 from decorators.input_validator.input_source import RequestJson
 from decorators.security.auth_token import sign_token, validate_token, unsign_token
@@ -14,7 +20,7 @@ auth_service = AuthService()
 
 @auth_blueprint.route("/sign-up", methods=["POST"])
 @input_validator(input_source=RequestJson(), validator=singup_validator)
-@sign_token(get_payload=lambda res: {"id": res.json["id"]})
+@sign_token(get_payload=lambda res: {"user_id": res.json["id"]})
 def signup():
     user_data = auth_service.signup(request.json)
     return jsonify(user_data)
@@ -22,7 +28,7 @@ def signup():
 
 @auth_blueprint.route("/login", methods=["POST"])
 @input_validator(input_source=RequestJson(), validator=login_validator)
-@sign_token(get_payload=lambda res: {"id": res.json["id"]})
+@sign_token(get_payload=lambda res: {"user_id": res.json["id"]})
 def login():
     user_date = auth_service.login(request.json)
     return jsonify(user_date)
@@ -49,4 +55,18 @@ def change_password():
     user = g.get("user", {})
     user_id = user.get("id", "")
     auth_service.change_password(user_id, data=request.json)
+    return jsonify()
+
+
+@auth_blueprint.route("/request-password-reset", methods=["POST"])
+@input_validator(input_source=RequestJson(), validator=request_password_reset_validator)
+def request_password_reset():
+    auth_service.request_password_reset(request.json["email"])
+    return jsonify()
+
+
+@auth_blueprint.route("/reset-password", methods=["POST"])
+@input_validator(input_source=RequestJson(), validator=password_reset_validator)
+def reset_password():
+    auth_service.reset_password(request.json)
     return jsonify()
