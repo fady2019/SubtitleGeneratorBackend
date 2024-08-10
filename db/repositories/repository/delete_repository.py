@@ -8,14 +8,14 @@ from db.repositories.repository.repository_typing import TFilter, TEntity, TDto,
 
 class DeleteRepository(Repository, Generic[TEntity, TDto]):
     @abstractmethod
-    def _execute_delete(self, filter: TFilter, options: MethodOptions) -> TEntity | None:
+    def _execute_delete(self, filter: TFilter[TEntity], options: MethodOptions) -> TEntity | None:
         pass
 
     @abstractmethod
     def _after_executing_delete(self, entity: TEntity | None) -> TDto | None:
         pass
 
-    def delete(self, filter: TFilter, options: MethodOptions | None = None):
+    def delete(self, filter: TFilter[TEntity], options: MethodOptions | None = None):
         options = set_default_method_options(options)
 
         def callback(session: Session):

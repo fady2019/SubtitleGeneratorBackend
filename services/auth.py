@@ -31,9 +31,7 @@ class AuthService:
         username_or_email, password = data["username_or_email"], data["password"]
 
         user = self.user_repo.find_first(
-            self.user_repo.or_filter(
-                self.user_repo.email_filter(username_or_email), self.user_repo.username_filter(username_or_email)
-            )
+            filter=lambda User: User.email.ilike(username_or_email) | User.username.ilike(username_or_email)
         )
 
         valid_credentials = user != None and check_password_hash(user["password"], password)
@@ -51,29 +49,30 @@ class AuthService:
 
         current_password, new_password = data["current_password"], data["new_password"]
 
-        user = self.user_repo.find_first_with_error(self.user_repo.id_filter(user_id))
+        user = self.user_repo.find_first_with_error(filter=lambda User: User.id == user_id)
 
         correct_password = check_password_hash(user["password"], current_password)
 
         if not correct_password:
             raise ResponseError("the current password is wrong", status_code=401)
 
-        self.user_repo.update(self.user_repo.id_filter(user_id), {"password": generate_password_hash(new_password)})
+        self.user_repo.update(
+            filter=lambda User: User.id == user_id,
+            new_data={"password": generate_password_hash(new_password)},
+        )
 
     def request_password_reset(self, email: str):
         # get user data
         user = self.user_repo.find_first_with_error(
-            self.user_repo.email_filter(email), {"error_msg": "there's no user with the entered email"}
+            filter=lambda User: User.email.ilike(email),
+            options={"error_msg": "there's no user with the entered email"},
         )
 
         def create_new_token_and_delete_old_tokens(session: Session):
             # delete old (password_reset) token(s) for that user
             self.temp_token_repo.delete(
-                self.temp_token_repo.and_filter(
-                    self.temp_token_repo.user_id_filter(user["id"]),
-                    self.temp_token_repo.type_filter(TemporaryTokenType.PASSWORD_RESET),
-                ),
-                {"session": session},
+                filter=lambda Token: (Token.user_id == user["id"]) & (Token.type == TemporaryTokenType.PASSWORD_RESET),
+                options={"session": session},
             )
 
             # create the new token
@@ -104,25 +103,22 @@ class AuthService:
         new_password, token = data["new_password"], data["token"]
 
         temp_token = self.temp_token_repo.find_first_with_error(
-            self.temp_token_repo.and_filter(
-                self.temp_token_repo.token_filter(token),
-                self.temp_token_repo.expiration_date_gt_filter(datetime.datetime.now()),
-            ),
-            {"error_msg": "invalid token"},
+            filter=lambda Token: (Token.token == token) & (Token.expiration_date > datetime.datetime.now()),
+            options={"error_msg": "invalid token"},
         )
 
         user_id = temp_token["user_id"]
 
         def reset_password_and_delete_token(session: Session):
             self.user_repo.update(
-                self.user_repo.id_filter(user_id),
-                {"password": generate_password_hash(new_password)},
-                {"session": session},
+                filter=lambda User: User.id == user_id,
+                new_data={"password": generate_password_hash(new_password)},
+                options={"session": session},
             )
 
             self.temp_token_repo.delete(
-                self.temp_token_repo.token_filter(temp_token["token"]),
-                {"session": session},
+                filter=lambda Token: Token.token == token,
+                options={"session": session},
             )
 
         self.user_repo.start_transaction(reset_password_and_delete_token)

@@ -29,7 +29,7 @@ class UserRepository(
 
     # FIND FIRST
     def _execute_find_first(self, filter, options):
-        return options["session"].query(UserEntity).filter(filter()).first()
+        return options["session"].query(UserEntity).filter(filter(UserEntity)).first()
 
     def _after_executing_find_first(self, entity):
         return self.mapper.to_dto(entity)
@@ -39,7 +39,7 @@ class UserRepository(
 
     # FIND FIRST WITH ERROR
     def _execute_find_first_with_error(self, filter, options):
-        user_entity = options["session"].query(UserEntity).filter(filter()).first()
+        user_entity = options["session"].query(UserEntity).filter(filter(UserEntity)).first()
 
         if not user_entity:
             raise ResponseError(options["error_msg"] or "user not found", status_code=404)
@@ -54,23 +54,8 @@ class UserRepository(
 
     # UPDATE
     def _execute_update(self, filter, new_data, options):
-        options["session"].query(UserEntity).filter(filter()).update(new_data)
+        options["session"].query(UserEntity).filter(filter(UserEntity)).update(new_data)
         return None
 
     def _after_executing_update(self, entity):
         return self.mapper.to_dto(entity)
-
-    #
-    #
-    #
-    #
-    #
-
-    def email_filter(self, email: str):
-        return lambda: UserEntity.email.ilike(email)
-
-    def username_filter(self, username: str):
-        return lambda: UserEntity.username.ilike(username)
-
-    def id_filter(self, id: str):
-        return lambda: UserEntity.id == id

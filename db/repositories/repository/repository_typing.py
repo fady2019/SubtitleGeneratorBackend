@@ -1,15 +1,15 @@
-from sqlalchemy import BinaryExpression, ColumnElement
+from sqlalchemy import ColumnElement
 from sqlalchemy.orm import Session, DeclarativeMeta
 from typing import Callable, TypeVar, TypedDict
 
 from db.dtos.dto import DTO, UpdateDTO
 
 
-TFilter = Callable[..., Callable[[], BinaryExpression[bool] | ColumnElement[bool]]]
 TDto = TypeVar("Dto", bound=DTO)
 TUpdateDto = TypeVar("UpdateDto", bound=UpdateDTO)
 TEntity = TypeVar("Entity", bound=DeclarativeMeta)
 TTransactionCbReturn = TypeVar("TransactionCbReturn")
+TFilter = Callable[[type[TEntity]], ColumnElement[bool]]
 
 
 class MethodOptions(TypedDict):

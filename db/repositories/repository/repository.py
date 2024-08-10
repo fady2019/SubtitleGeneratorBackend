@@ -1,19 +1,12 @@
 from abc import ABC
-from sqlalchemy import or_, and_
 from sqlalchemy.orm import Session
 from typing import Callable
 
-from db.repositories.repository.repository_typing import TFilter, TTransactionCbReturn
+from db.repositories.repository.repository_typing import TTransactionCbReturn
 from db.db_config import create_session
 
 
 class Repository(ABC):
-    def or_filter(self, *filters: tuple[TFilter]):
-        return lambda: or_(*[filter() for filter in filters])
-
-    def and_filter(self, *filters: tuple[TFilter]):
-        return lambda: and_(*[filter() for filter in filters])
-
     def start_transaction(self, callback: Callable[[Session], TTransactionCbReturn], default_session: Session | None = None):
         """
         Description

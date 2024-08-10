@@ -16,14 +16,14 @@ from db.repositories.repository.repository_typing import (
 class UpdateRepository(Repository, Generic[TEntity, TDto, TUpdateDto]):
     # UPDATE
     @abstractmethod
-    def _execute_update(self, filter: TFilter, new_data: TUpdateDto, options: MethodOptions) -> TEntity | None:
+    def _execute_update(self, filter: TFilter[TEntity], new_data: TUpdateDto, options: MethodOptions) -> TEntity | None:
         pass
 
     @abstractmethod
     def _after_executing_update(self, entity: TEntity | None) -> TDto | None:
         pass
 
-    def update(self, filter: TFilter, new_data: TUpdateDto, options: MethodOptions | None = None):
+    def update(self, filter: TFilter[TEntity], new_data: TUpdateDto, options: MethodOptions | None = None):
         options = set_default_method_options(options)
 
         def callback(session: Session):

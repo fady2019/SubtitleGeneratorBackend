@@ -33,7 +33,7 @@ def valid_username(field_placeholder: str):
 
 def unique_username(field_placeholder: str):
     def validator(username: str):
-        if user_repo.find_first(user_repo.username_filter(username)) != None:
+        if user_repo.find_first(filter=lambda User: User.username.ilike(username)) != None:
             raise CustomInvalid(message=f"the {field_placeholder} should be unique", status_code=409)
 
         return username
@@ -55,7 +55,7 @@ def valid_email(field_placeholder: str):
 
 def unique_email(field_placeholder: str):
     def validator(email: str):
-        if user_repo.find_first(user_repo.email_filter(email)) != None:
+        if user_repo.find_first(filter=lambda User: User.email.ilike(email)) != None:
             raise CustomInvalid(message=f"the {field_placeholder} should be unique", status_code=409)
 
         return email

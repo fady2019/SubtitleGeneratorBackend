@@ -17,14 +17,14 @@ from db.repositories.repository.repository_typing import (
 class FindRepository(Repository, Generic[TEntity, TDto]):
     # FIND FIRST
     @abstractmethod
-    def _execute_find_first(self, filter: TFilter, options: MethodOptions) -> TEntity | None:
+    def _execute_find_first(self, filter: TFilter[TEntity], options: MethodOptions) -> TEntity | None:
         pass
 
     @abstractmethod
     def _after_executing_find_first(self, entity: TEntity | None) -> TDto | None:
         pass
 
-    def find_first(self, filter: TFilter, options: MethodOptions | None = None):
+    def find_first(self, filter: TFilter[TEntity], options: MethodOptions | None = None):
         options = set_default_method_options(options)
 
         def callback(session: Session):
@@ -40,14 +40,14 @@ class FindRepository(Repository, Generic[TEntity, TDto]):
 
     # FIND FIRST WITH ERROR
     @abstractmethod
-    def _execute_find_first_with_error(self, filter: TFilter, options: FindWithErrorOptions) -> TEntity:
+    def _execute_find_first_with_error(self, filter: TFilter[TEntity], options: FindWithErrorOptions) -> TEntity:
         pass
 
     @abstractmethod
     def _after_executing_find_first_with_error(self, entity: TEntity) -> TDto:
         pass
 
-    def find_first_with_error(self, filter: TFilter, options: FindWithErrorOptions | None = None):
+    def find_first_with_error(self, filter: TFilter[TEntity], options: FindWithErrorOptions | None = None):
         options = set_default_find_with_error_options(options)
 
         def callback(session: Session):

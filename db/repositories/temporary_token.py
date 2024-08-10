@@ -1,9 +1,7 @@
-import datetime
-
 from db.repositories.repository.create_repository import CreateRepository
 from db.repositories.repository.delete_repository import DeleteRepository
 from db.repositories.repository.find_repository import FindRepository
-from db.entities.temporary_token import TemporaryTokenEntity, TemporaryTokenType
+from db.entities.temporary_token import TemporaryTokenEntity
 from db.dtos.temporary_token import TemporaryTokenDTO
 from db.mappers.temporary_token import TemporaryTokenMapper
 from exceptions.response_error import ResponseError
@@ -31,7 +29,7 @@ class TemporaryTokenRepository(
 
     # DELETE
     def _execute_delete(self, filter, options):
-        options["session"].query(TemporaryTokenEntity).filter(filter()).delete()
+        options["session"].query(TemporaryTokenEntity).filter(filter(TemporaryTokenEntity)).delete()
         return None
 
     def _after_executing_delete(self, entity):
@@ -42,7 +40,7 @@ class TemporaryTokenRepository(
 
     # FIND
     def _execute_find_first(self, filter, options):
-        return options["session"].query(TemporaryTokenEntity).filter(filter()).first()
+        return options["session"].query(TemporaryTokenEntity).filter(filter(TemporaryTokenEntity)).first()
 
     def _after_executing_find_first(self, entity):
         return self.mapper.to_dto(entity)
@@ -52,7 +50,7 @@ class TemporaryTokenRepository(
 
     # FIND WITH ERROR
     def _execute_find_first_with_error(self, filter, options):
-        temp_token_entity = options["session"].query(TemporaryTokenEntity).filter(filter()).first()
+        temp_token_entity = options["session"].query(TemporaryTokenEntity).filter(filter(TemporaryTokenEntity)).first()
 
         if not temp_token_entity:
             raise ResponseError(options["error_msg"] or "token not found", status_code=404)
@@ -61,21 +59,3 @@ class TemporaryTokenRepository(
 
     def _after_executing_find_first_with_error(self, entity):
         return self.mapper.to_dto(entity)
-
-    #
-    #
-    #
-    #
-    #
-
-    def token_filter(self, token: str):
-        return lambda: TemporaryTokenEntity.token == token
-
-    def user_id_filter(self, user_id: str):
-        return lambda: TemporaryTokenEntity.user_id == user_id
-
-    def expiration_date_gt_filter(self, date: datetime.datetime):
-        return lambda: TemporaryTokenEntity.expiration_date > date
-
-    def type_filter(self, type: TemporaryTokenType):
-        return lambda: TemporaryTokenEntity.type == type

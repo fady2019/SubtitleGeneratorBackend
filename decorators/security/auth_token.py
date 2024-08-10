@@ -49,7 +49,7 @@ def validate_token(ignore_exp=False, ignore_invalid_token=False):
 
                 payload: Payload = extract_payload_from_token(token, JWT_PUBLIC_KEY, ignore_exp=ignore_exp)
 
-                user = user_repo.find_first(user_repo.id_filter(payload["user_id"]))
+                user = user_repo.find_first(filter=lambda User: User.id == payload["user_id"])
 
                 if not user:
                     raise Exception()
