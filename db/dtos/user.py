@@ -1,6 +1,6 @@
 from typing import Optional
 
-from db.dtos.dto import DTO
+from db.dtos.dto import DTO, UpdateDTO
 
 
 class UserDTO(DTO):
@@ -12,7 +12,7 @@ class UserDTO(DTO):
     id: Optional[str] = None
 
 
-class UpdateUserDTO(DTO):
+class UpdateUserDTO(UpdateDTO):
     first_name: Optional[str] = None
     last_name: Optional[str] = None
     username: Optional[str] = None

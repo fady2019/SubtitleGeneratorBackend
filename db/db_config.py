@@ -18,4 +18,4 @@ Base: DeclarativeMeta = declarative_base()
 
 
 def create_session():
-    return sessionmaker(bind=DB_ENGINE)
+    return sessionmaker(bind=DB_ENGINE, expire_on_commit=False)()

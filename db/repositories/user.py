@@ -1,53 +1,70 @@
-from db.db_config import create_session
-from db.repositories.repository import Repository, TFilter
+from db.repositories.repository.create_repository import CreateRepository
+from db.repositories.repository.update_repository import UpdateRepository
+from db.repositories.repository.find_repository import FindRepository
 from db.entities.user import UserEntity
 from db.dtos.user import UserDTO, UpdateUserDTO
 from db.mappers.user import UserMapper
 from exceptions.response_error import ResponseError
 
 
-class UserRepository(Repository):
+class UserRepository(
+    CreateRepository[UserEntity, UserDTO],
+    UpdateRepository[UserEntity, UserDTO, UpdateUserDTO],
+    FindRepository[UserEntity, UserDTO],
+):
     def __init__(self):
         self.mapper = UserMapper()
 
-    def create(self, data: UserDTO) -> UserDTO:
-        session = create_session()()
+    # CERATE
+    def _execute_create(self, data, options):
+        user_entity = self.mapper.to_entity(data)
+        options["session"].add(user_entity)
+        return user_entity
 
-        user = None
+    def _after_executing_create(self, entity):
+        return self.mapper.to_dto(entity)
 
-        with session:
-            user_entity = self.mapper.to_entity(data)
-            session.add(user_entity)
-            session.commit()
-            user = self.mapper.to_dto(user_entity)
+    #
+    #
 
-        return user
+    # FIND FIRST
+    def _execute_find_first(self, filter, options):
+        return options["session"].query(UserEntity).filter(filter()).first()
 
-    def find_first(self, filter: TFilter) -> UserDTO | None:
-        session = create_session()()
+    def _after_executing_find_first(self, entity):
+        return self.mapper.to_dto(entity)
 
-        user = None
+    #
+    #
 
-        with session:
-            user_entity = session.query(UserEntity).filter(filter()).first()
-            user = self.mapper.to_dto(user_entity)
+    # FIND FIRST WITH ERROR
+    def _execute_find_first_with_error(self, filter, options):
+        user_entity = options["session"].query(UserEntity).filter(filter()).first()
 
-        return user
+        if not user_entity:
+            raise ResponseError(options["error_msg"] or "user not found", status_code=404)
 
-    def find_first_with_error(self, filter: TFilter) -> UserDTO:
-        user = self.find_first(filter)
+        return user_entity
 
-        if not user:
-            raise ResponseError("user not found", status_code=404)
+    def _after_executing_find_first_with_error(self, entity):
+        return self.mapper.to_dto(entity)
 
-        return user
+    #
+    #
 
-    def update(self, filter: TFilter, new_data: UpdateUserDTO) -> UserDTO | None:
-        session = create_session()()
+    # UPDATE
+    def _execute_update(self, filter, new_data, options):
+        options["session"].query(UserEntity).filter(filter()).update(new_data)
+        return None
 
-        with session:
-            session.query(UserEntity).filter(filter()).update(new_data)
-            session.commit()
+    def _after_executing_update(self, entity):
+        return self.mapper.to_dto(entity)
+
+    #
+    #
+    #
+    #
+    #
 
     def email_filter(self, email: str):
         return lambda: UserEntity.email.ilike(email)
