@@ -1,0 +1,20 @@
+tags:
+    - Verification
+summary: Request Email Verification
+description: Get a verification link for your email address
+operationId: RequestEmailVerification
+parameters:
+    - in: path
+      name: user_id
+      required: true
+      schema:
+          type: string
+responses:
+    200:
+        description: Success
+    400:
+        $ref: '#/components/responses/BadRequestError'
+    404:
+        $ref: '#/components/responses/NotFoundError'
+    5xx:
+        $ref: '#/components/responses/ServerError'

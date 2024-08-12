@@ -16,6 +16,8 @@ responses:
         $ref: '#/components/responses/BadRequestError'
     401:
         $ref: '#/components/responses/UnauthorizedError'
+    403:
+        $ref: '#/components/responses/ForbiddenError'
     422:
         $ref: '#/components/responses/UnprocessableEntityError'
     5xx:

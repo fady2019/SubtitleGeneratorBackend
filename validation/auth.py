@@ -1,5 +1,6 @@
 from voluptuous import Schema, All, Coerce, Required, Email, Length, Invalid
 import regex as re
+from uuid import UUID
 
 from validation.shared import CustomInvalid, validator_executor
 from validation.transformers import trim
@@ -80,6 +81,16 @@ def valid_password(field_placeholder: str):
             )
 
         return password
+
+    return validator
+
+
+def valid_uuid(field_placeholder: str):
+    def validator(value: str):
+        try:
+            UUID(value)
+        except:
+            raise Invalid(f"invalid {field_placeholder}")
 
     return validator
 
@@ -176,6 +187,23 @@ PasswordResetValidatorSchema = Schema(
     },
 )
 
+RequestEmailVerificationValidatorSchema = Schema(
+    {
+        Required("user_id", msg="the user id is required"): All(
+            Coerce(str, msg="the user id should be string"),
+            valid_uuid("user id"),
+        )
+    },
+)
+
+EmailVerificationValidatorSchema = Schema(
+    {
+        Required("token", msg="the token is required"): All(
+            Coerce(str, msg="the token should be string"),
+        )
+    },
+)
+
 
 def singup_validator(data):
     validator_executor(SignUpValidatorSchema, data)
@@ -195,3 +223,11 @@ def request_password_reset_validator(data):
 
 def password_reset_validator(data):
     validator_executor(PasswordResetValidatorSchema, data)
+
+
+def request_email_verification_validator(data):
+    validator_executor(RequestEmailVerificationValidatorSchema, data)
+
+
+def email_verification_validator(data):
+    validator_executor(EmailVerificationValidatorSchema, data)

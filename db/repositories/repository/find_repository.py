@@ -6,7 +6,6 @@ from db.repositories.repository.repository import Repository
 from db.repositories.repository.repository_typing import (
     TFilter,
     TEntity,
-    TDto,
     MethodOptions,
     FindWithErrorOptions,
     set_default_method_options,
@@ -14,14 +13,10 @@ from db.repositories.repository.repository_typing import (
 )
 
 
-class FindRepository(Repository, Generic[TEntity, TDto]):
+class FindRepository(Repository, Generic[TEntity]):
     # FIND FIRST
     @abstractmethod
     def _execute_find_first(self, filter: TFilter[TEntity], options: MethodOptions) -> TEntity | None:
-        pass
-
-    @abstractmethod
-    def _after_executing_find_first(self, entity: TEntity | None) -> TDto | None:
         pass
 
     def find_first(self, filter: TFilter[TEntity], options: MethodOptions | None = None):
@@ -31,9 +26,7 @@ class FindRepository(Repository, Generic[TEntity, TDto]):
             options["session"] = session
             return self._execute_find_first(filter, options)
 
-        entity = self.start_transaction(callback=callback, default_session=options["session"])
-
-        return self._after_executing_find_first(entity)
+        return self.start_transaction(callback=callback, default_session=options["session"])
 
     #
     #
@@ -43,10 +36,6 @@ class FindRepository(Repository, Generic[TEntity, TDto]):
     def _execute_find_first_with_error(self, filter: TFilter[TEntity], options: FindWithErrorOptions) -> TEntity:
         pass
 
-    @abstractmethod
-    def _after_executing_find_first_with_error(self, entity: TEntity) -> TDto:
-        pass
-
     def find_first_with_error(self, filter: TFilter[TEntity], options: FindWithErrorOptions | None = None):
         options = set_default_find_with_error_options(options)
 
@@ -54,6 +43,4 @@ class FindRepository(Repository, Generic[TEntity, TDto]):
             options["session"] = session
             return self._execute_find_first_with_error(filter, options)
 
-        entity = self.start_transaction(callback=callback, default_session=options["session"])
-
-        return self._after_executing_find_first_with_error(entity)
+        return self.start_transaction(callback=callback, default_session=options["session"])

@@ -4,12 +4,13 @@ from typing import Callable, TypedDict
 import os, base64
 
 from db.repositories.user import UserRepository
+from dtos_mappers.user import UserMapper
 from helpers.cookies import set_cookie, delete_cookie
 from helpers.jwt import generate_token_from_payload, extract_payload_from_token
 from exceptions.response_error import ResponseError
 
 
-JWT_EXP_IN_HOURS = int(os.getenv("JWT_AUTH_TOKEN_EXP_IN_HOURS") or 1)
+JWT_EXP_IN_HOURS = float(os.getenv("JWT_AUTH_TOKEN_EXP_IN_HOURS", "1"))
 JWT_PUBLIC_KEY = base64.b64decode(os.getenv("JWT_AUTH_TOKEN_PUBLIC_KEY")).decode()
 JWT_PRIVATE_KEY = base64.b64decode(os.getenv("JWT_AUTH_TOKEN_PRIVATE_KEY")).decode()
 JWT_TOKEN_COOKIE_NAME = os.getenv("JWT_AUTH_TOKEN_TOKEN_COOKIE_NAME", "token")
@@ -28,6 +29,9 @@ def sign_token(get_payload: Callable[[Response], Payload]):
             response = f(*args, **kwargs)
 
             payload = get_payload(response)
+
+            if payload == None:
+                return response
 
             token, expiration_date = generate_token_from_payload(payload, JWT_EXP_IN_HOURS, JWT_PRIVATE_KEY)
 
@@ -54,8 +58,7 @@ def validate_token(ignore_exp=False, ignore_invalid_token=False):
                 if not user:
                     raise Exception()
 
-                del user["password"]
-                g.user = user
+                g.user = UserMapper().to_dto(user)
             except:
                 if not ignore_invalid_token:
                     raise ResponseError("forbidden", status_code=403)

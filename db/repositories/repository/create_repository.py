@@ -1,28 +1,26 @@
 from sqlalchemy.orm import Session
 from abc import abstractmethod
-from typing import Generic
+from typing import Generic, TypeVar
 
 from db.repositories.repository.repository import Repository
-from db.repositories.repository.repository_typing import TEntity, TDto, MethodOptions, set_default_method_options
+from db.repositories.repository.repository_typing import TEntity, MethodOptions, set_default_method_options
+from db.entity_dicts.entity_dict import CreateEntityDict
 
 
-class CreateRepository(Repository, Generic[TEntity, TDto]):
+TCreateEntityDict = TypeVar("CreateEntityDict", bound=CreateEntityDict)
+
+
+class CreateRepository(Repository, Generic[TEntity, TCreateEntityDict]):
     # CREATE
     @abstractmethod
-    def _execute_create(self, data: TDto, options: MethodOptions) -> TEntity:
+    def _execute_create(self, data: TCreateEntityDict, options: MethodOptions) -> TEntity:
         pass
 
-    @abstractmethod
-    def _after_executing_create(self, entity: TEntity) -> TDto:
-        pass
-
-    def create(self, data: TDto, options: MethodOptions | None = None):
+    def create(self, data: TCreateEntityDict, options: MethodOptions | None = None):
         options = set_default_method_options(options)
 
         def callback(session: Session):
             options["session"] = session
             return self._execute_create(data, options)
 
-        entity = self.start_transaction(callback=callback, default_session=options["session"])
-
-        return self._after_executing_create(entity)
+        return self.start_transaction(callback=callback, default_session=options["session"])

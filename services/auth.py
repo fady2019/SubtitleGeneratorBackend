@@ -6,14 +6,15 @@ import os, secrets, datetime
 from db.repositories.user import UserRepository
 from db.repositories.temporary_token import TemporaryTokenRepository
 from db.entities.temporary_token import TemporaryTokenType
+from dtos_mappers.user import UserMapper
 from exceptions.response_error import ResponseError
 from helpers.email import send_email
 from helpers.date import add_to_datetime
 
 
-RP_LINK_HOST = os.getenv("RESET_PASSWORD_LINK_HOST")
-RP_TOKEN_LENGTH = int(os.getenv("RESET_PASSWORD_TOKEN_LENGTH", "32"))
-RP_EXP_IN_HOURS = int(os.getenv("RESET_PASSWORD_TOKEN_EXP_IN_HOURS", "1"))
+TEMP_TOKEN_HOST_URL = os.getenv("TEMP_TOKEN_HOST_URL")
+TEMP_TOKEN_LENGTH = int(os.getenv("RESET_PASSWORD_TOKEN_LENGTH", "32"))
+TEMP_TOKEN_EXP_IN_HOURS = float(os.getenv("TEMP_TOKEN_EXP_IN_HOURS", "1"))
 
 
 class AuthService:
@@ -21,11 +22,17 @@ class AuthService:
         self.user_repo = UserRepository()
         self.temp_token_repo = TemporaryTokenRepository()
 
+    #
+    #
+    #
+
     def signup(self, data: dict):
         data["password"] = generate_password_hash(data["password"])
         user = self.user_repo.create(data)
-        del user["password"]
-        return user
+        self.request_email_verification(user.id)
+
+    #
+    #
 
     def login(self, data: dict):
         username_or_email, password = data["username_or_email"], data["password"]
@@ -34,14 +41,22 @@ class AuthService:
             filter=lambda User: User.email.ilike(username_or_email) | User.username.ilike(username_or_email)
         )
 
-        valid_credentials = user != None and check_password_hash(user["password"], password)
+        valid_credentials = user != None and check_password_hash(user.password, password)
 
         if not valid_credentials:
             raise ResponseError("invalid credentials, please try again with the valid ones", status_code=401)
 
-        del user["password"]
+        if user.is_verified:
+            return UserMapper().to_dto(user)
 
-        return user
+        self.request_email_verification(user.id)
+
+        raise ResponseError(
+            "your email is not verified yet. please check your inbox for a verification link", status_code=403
+        )
+
+    #
+    #
 
     def change_password(self, user_id: str, data: dict):
         if not user_id:
@@ -51,7 +66,7 @@ class AuthService:
 
         user = self.user_repo.find_first_with_error(filter=lambda User: User.id == user_id)
 
-        correct_password = check_password_hash(user["password"], current_password)
+        correct_password = check_password_hash(user.password, current_password)
 
         if not correct_password:
             raise ResponseError("the current password is wrong", status_code=401)
@@ -61,6 +76,9 @@ class AuthService:
             new_data={"password": generate_password_hash(new_password)},
         )
 
+    #
+    #
+
     def request_password_reset(self, email: str):
         # get user data
         user = self.user_repo.find_first_with_error(
@@ -68,50 +86,30 @@ class AuthService:
             options={"error_msg": "there's no user with the entered email"},
         )
 
-        def create_new_token_and_delete_old_tokens(session: Session):
-            # delete old (password_reset) token(s) for that user
-            self.temp_token_repo.delete(
-                filter=lambda Token: (Token.user_id == user["id"]) & (Token.type == TemporaryTokenType.PASSWORD_RESET),
-                options={"session": session},
-            )
-
-            # create the new token
-            return self.temp_token_repo.create(
-                {
-                    "token": secrets.token_urlsafe(RP_TOKEN_LENGTH),
-                    "expiration_date": add_to_datetime(hours=RP_EXP_IN_HOURS),
-                    "user_id": user["id"],
-                    "type": TemporaryTokenType.PASSWORD_RESET,
-                },
-                {"session": session},
-            )
-
-        temp_token = self.temp_token_repo.start_transaction(create_new_token_and_delete_old_tokens)
+        temp_token = self.__create_temp_token(user.id, TemporaryTokenType.PASSWORD_RESET)
 
         email_template = render_template(
             "emails/reset_password.html",
             **{
-                "user_name": f'{user["first_name"]} {user["last_name"]}',
-                "reset_link": f'{RP_LINK_HOST or request.host_url}reset-password/{temp_token["token"]}',
-                "link_expiration_date": temp_token["expiration_date"],
+                "user_name": f"{user.first_name} {user.last_name}",
+                "reset_link": f"{TEMP_TOKEN_HOST_URL or request.host_url}reset-password/{temp_token.token}",
+                "link_expiration_date": temp_token.expiration_date,
             },
         )
 
-        send_email("Password Reset", [user["email"]], html=email_template)
+        send_email("Password Reset", [user.email], html=email_template)
+
+    #
+    #
 
     def reset_password(self, data: dict):
         new_password, token = data["new_password"], data["token"]
 
-        temp_token = self.temp_token_repo.find_first_with_error(
-            filter=lambda Token: (Token.token == token) & (Token.expiration_date > datetime.datetime.now()),
-            options={"error_msg": "invalid token"},
-        )
-
-        user_id = temp_token["user_id"]
+        temp_token = self.__find_temp_token(token, TemporaryTokenType.PASSWORD_RESET)
 
         def reset_password_and_delete_token(session: Session):
             self.user_repo.update(
-                filter=lambda User: User.id == user_id,
+                filter=lambda User: User.id == temp_token.user_id,
                 new_data={"password": generate_password_hash(new_password)},
                 options={"session": session},
             )
@@ -122,3 +120,86 @@ class AuthService:
             )
 
         self.user_repo.start_transaction(reset_password_and_delete_token)
+
+    #
+    #
+
+    def request_email_verification(self, user_id: str):
+        # get user data
+        user = self.user_repo.find_first_with_error(
+            filter=lambda User: User.id == user_id,
+            options={"error_msg": "there's no user with the entered id"},
+        )
+
+        if user.is_verified:
+            return
+
+        temp_token = self.__create_temp_token(user.id, TemporaryTokenType.EMAIL_VERIFICATION)
+
+        email_template = render_template(
+            "emails/verify_email.html",
+            **{
+                "user_name": f"{user.first_name} {user.last_name}",
+                "verification_link": f"{TEMP_TOKEN_HOST_URL or request.host_url}verify-password/{temp_token.token}",
+                "link_expiration_date": temp_token.expiration_date,
+            },
+        )
+
+        send_email("Email Verification", [user.email], html=email_template)
+
+    #
+    #
+
+    def verify_email(self, token: str):
+        temp_token = self.__find_temp_token(token, TemporaryTokenType.EMAIL_VERIFICATION)
+
+        def verify_email_and_delete_token(session: Session):
+            self.user_repo.update(
+                filter=lambda User: User.id == temp_token.user_id,
+                new_data={"is_verified": True},
+                options={"session": session},
+            )
+
+            self.temp_token_repo.delete(
+                filter=lambda Token: Token.token == token,
+                options={"session": session},
+            )
+
+        self.user_repo.start_transaction(verify_email_and_delete_token)
+
+    #
+    #
+    #
+
+    # PRIVATE
+    def __create_temp_token(self, user_id: str, token_type: TemporaryTokenType):
+        def create_new_token_and_delete_old_tokens(session: Session):
+            # delete old (password_reset) token(s) for that user
+            self.temp_token_repo.delete(
+                filter=lambda Token: (Token.user_id == user_id) & (Token.type == token_type),
+                options={"session": session},
+            )
+
+            # create the new token
+            return self.temp_token_repo.create(
+                {
+                    "token": secrets.token_urlsafe(TEMP_TOKEN_LENGTH),
+                    "expiration_date": add_to_datetime(hours=TEMP_TOKEN_EXP_IN_HOURS),
+                    "user_id": user_id,
+                    "type": token_type,
+                },
+                {"session": session},
+            )
+
+        return self.temp_token_repo.start_transaction(create_new_token_and_delete_old_tokens)
+
+    #
+    #
+
+    def __find_temp_token(self, token: str, type: TemporaryTokenType):
+        return self.temp_token_repo.find_first_with_error(
+            filter=lambda Token: (Token.token == token)
+            & (Token.expiration_date > datetime.datetime.now())
+            & (Token.type == type),
+            options={"error_msg": "invalid token"},
+        )

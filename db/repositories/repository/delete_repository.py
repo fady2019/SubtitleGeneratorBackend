@@ -3,16 +3,12 @@ from abc import abstractmethod
 from typing import Generic
 
 from db.repositories.repository.repository import Repository
-from db.repositories.repository.repository_typing import TFilter, TEntity, TDto, MethodOptions, set_default_method_options
+from db.repositories.repository.repository_typing import TFilter, TEntity, MethodOptions, set_default_method_options
 
 
-class DeleteRepository(Repository, Generic[TEntity, TDto]):
+class DeleteRepository(Repository, Generic[TEntity]):
     @abstractmethod
     def _execute_delete(self, filter: TFilter[TEntity], options: MethodOptions) -> TEntity | None:
-        pass
-
-    @abstractmethod
-    def _after_executing_delete(self, entity: TEntity | None) -> TDto | None:
         pass
 
     def delete(self, filter: TFilter[TEntity], options: MethodOptions | None = None):
@@ -22,6 +18,4 @@ class DeleteRepository(Repository, Generic[TEntity, TDto]):
             options["session"] = session
             return self._execute_delete(filter, options)
 
-        entity = self.start_transaction(callback=callback, default_session=options["session"])
-
-        return self._after_executing_delete(entity)
+        return self.start_transaction(callback=callback, default_session=options["session"])

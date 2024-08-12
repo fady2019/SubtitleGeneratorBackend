@@ -2,12 +2,8 @@ from sqlalchemy import ColumnElement
 from sqlalchemy.orm import Session, DeclarativeMeta
 from typing import Callable, TypeVar, TypedDict
 
-from db.dtos.dto import DTO, UpdateDTO
 
-
-TDto = TypeVar("Dto", bound=DTO)
-TUpdateDto = TypeVar("UpdateDto", bound=UpdateDTO)
-TEntity = TypeVar("Entity", bound=DeclarativeMeta)
+TEntity = TypeVar("Entity", bound=type[DeclarativeMeta])
 TTransactionCbReturn = TypeVar("TransactionCbReturn")
 TFilter = Callable[[type[TEntity]], ColumnElement[bool]]
 

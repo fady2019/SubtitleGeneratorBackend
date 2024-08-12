@@ -1,0 +1,20 @@
+tags:
+    - Verification
+summary: Email Verification
+description: Verify your email address
+operationId: EmailVerification
+parameters:
+    - in: path
+      name: token
+      required: true
+      schema:
+          type: string
+responses:
+    200:
+        description: Success
+    400:
+        $ref: '#/components/responses/BadRequestError'
+    404:
+        $ref: '#/components/responses/NotFoundError'
+    5xx:
+        $ref: '#/components/responses/ServerError'

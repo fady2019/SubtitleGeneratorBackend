@@ -11,3 +11,8 @@ class InputSource(ABC):
 class RequestJson(InputSource):
     def read(self):
         return request.json
+
+
+class RequestViewArgs(InputSource):
+    def read(self):
+        return request.view_args
