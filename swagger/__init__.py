@@ -8,7 +8,7 @@ def config_swagger(app: Flask):
 
     swagger_config["openapi"] = "3.0.3"
     swagger_config["title"] = "CS50x Subtitle Generator Docs"
-    swagger_config["doc_dir"] = os.path.join(os.getcwd(), "swagger", "docs")
+    # swagger_config["doc_dir"] = os.path.join(os.getcwd(), "swagger", "docs")
     swagger_config["specs_route"] = "/api-docs/"
 
     swagger_config["specs"] = [
@@ -25,3 +25,7 @@ def config_swagger(app: Flask):
         config=swagger_config,
         template_file=os.path.join(os.getcwd(), "swagger", "template.yml"),
     )
+
+
+def get_swagger_doc_path(*doc_paths: list[str]):
+    return os.path.join(os.getcwd(), "swagger", "docs", *doc_paths)

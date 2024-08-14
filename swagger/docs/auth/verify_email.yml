@@ -11,10 +11,12 @@ parameters:
           type: string
 responses:
     200:
-        description: Success
+        $ref: '#/components/responses/NoDataResponse'
     400:
-        $ref: '#/components/responses/BadRequestError'
-    404:
-        $ref: '#/components/responses/NotFoundError'
+        description: Bad Request (Invalid token)
+        content:
+            application/json:
+                schema:
+                    $ref: '#/components/schemas/Response'
     5xx:
         $ref: '#/components/responses/ServerError'

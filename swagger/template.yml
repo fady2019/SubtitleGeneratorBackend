@@ -64,11 +64,20 @@ components:
                 email:
                     type: string
         #
-        ResponseError:
+        Response:
             type: object
             properties:
                 message:
                     type: string
+        #
+        ResponseWithUserData:
+            allOf:
+                - type: object
+                  properties:
+                      data:
+                          $ref: '#/components/schemas/User'
+                - $ref: '#/components/schemas/Response'
+
     #
     #
     #
@@ -78,56 +87,68 @@ components:
             content:
                 application/json:
                     schema:
-                        $ref: '#/components/schemas/User'
+                        type: object
+                        properties:
+                            data:
+                                $ref: '#/components/schemas/User'
+                            message:
+                                type: string
+        #
+        NoDataResponse:
+            description: Success
+            content:
+                application/json:
+                    schema:
+                        $ref: '#/components/schemas/Response'
         #
         BadRequestError:
             description: Bad Request
             content:
                 application/json:
                     schema:
-                        $ref: '#/components/schemas/ResponseError'
+                        $ref: '#/components/schemas/Response'
         #
-        UnauthorizedError:
-            description: Unauthorized
-            content:
-                application/json:
-                    schema:
-                        $ref: '#/components/schemas/ResponseError'
+        # UnauthorizedError:
+        #     description: Unauthorized
+        #     content:
+        #         application/json:
+        #             schema:
+        #                 $ref: '#/components/schemas/Response'
         #
         ForbiddenError:
-            description: Forbidden
+            description: Forbidden (Require login)
             content:
                 application/json:
                     schema:
-                        $ref: '#/components/schemas/ResponseError'
+                        $ref: '#/components/schemas/Response'
         #
-        NotFoundError:
-            description: Not Found
-            content:
-                application/json:
-                    schema:
-                        $ref: '#/components/schemas/ResponseError'
+        # NotFoundError:
+        #     description: Not Found
+        #     content:
+        #         application/json:
+        #             schema:
+        #                 $ref: '#/components/schemas/Response'
         #
-        ConflictError:
-            description: Conflict
-            content:
-                application/json:
-                    schema:
-                        $ref: '#/components/schemas/ResponseError'
+        # ConflictError:
+        #     description: Conflict
+        #     content:
+        #         application/json:
+        #             schema:
+        #                 $ref: '#/components/schemas/Response'
         #
         UnprocessableEntityError:
-            description: Unprocessable Entity
+            description: Unprocessable Entity (Invalid input)
             content:
                 application/json:
                     schema:
-                        $ref: '#/components/schemas/ResponseError'
+                        $ref: '#/components/schemas/Response'
         #
         ServerError:
             description: Server Issue
             content:
                 application/json:
                     schema:
-                        $ref: '#/components/schemas/ResponseError'
+                        $ref: '#/components/schemas/Response'
     #
     #
     #

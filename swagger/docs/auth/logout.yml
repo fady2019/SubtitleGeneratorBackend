@@ -5,6 +5,6 @@ description: Clear the token cookie.
 operationId: Logout
 responses:
     200:
-        description: Success
+        $ref: '#/components/responses/NoDataResponse'
     5xx:
         $ref: '#/components/responses/ServerError'

@@ -1,6 +1,6 @@
 from voluptuous import Schema, MultipleInvalid, Invalid
 
-from exceptions.response_error import ResponseError
+from response.response import ResponseError
 
 
 class CustomInvalid(Invalid):
@@ -16,6 +16,6 @@ def validator_executor(schema: Schema, data):
         except MultipleInvalid as err:
             raise err.errors[0]
     except CustomInvalid as err:
-        raise ResponseError(err.error_message, err.status_code)
+        raise ResponseError({"msg": err.error_message, "status_code": err.status_code})
     except Invalid as err:
-        raise ResponseError(err.error_message, 422)
+        raise ResponseError({"msg": err.error_message, "status_code": 422})

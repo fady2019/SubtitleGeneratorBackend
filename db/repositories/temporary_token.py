@@ -3,7 +3,7 @@ from db.repositories.repository.delete_repository import DeleteRepository
 from db.repositories.repository.find_repository import FindRepository
 from db.entities.temporary_token import TemporaryTokenEntity
 from db.entity_dicts.temporary_token_entity_dict import CreateTemporaryTokenEntityDict
-from exceptions.response_error import ResponseError
+from response.response import ResponseError
 
 
 class TemporaryTokenRepository(
@@ -44,6 +44,6 @@ class TemporaryTokenRepository(
         temp_token_entity = options["session"].query(TemporaryTokenEntity).filter(filter(TemporaryTokenEntity)).first()
 
         if not temp_token_entity:
-            raise ResponseError(options["error_msg"] or "token not found", status_code=404)
+            raise ResponseError(options["error_msg"] or {"msg": "token not found", "status_code": 404})
 
         return temp_token_entity

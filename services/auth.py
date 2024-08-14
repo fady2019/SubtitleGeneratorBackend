@@ -7,9 +7,10 @@ from db.repositories.user import UserRepository
 from db.repositories.temporary_token import TemporaryTokenRepository
 from db.entities.temporary_token import TemporaryTokenType
 from dtos_mappers.user import UserMapper
-from exceptions.response_error import ResponseError
 from helpers.email import send_email
 from helpers.date import add_to_datetime
+from response.response import ResponseError
+from response.response_messages import ResponseMessage
 
 
 TEMP_TOKEN_HOST_URL = os.getenv("TEMP_TOKEN_HOST_URL")
@@ -30,6 +31,7 @@ class AuthService:
         data["password"] = generate_password_hash(data["password"])
         user = self.user_repo.create(data)
         self.request_email_verification(user.id)
+        return UserMapper().to_dto(user)
 
     #
     #
@@ -44,16 +46,12 @@ class AuthService:
         valid_credentials = user != None and check_password_hash(user.password, password)
 
         if not valid_credentials:
-            raise ResponseError("invalid credentials, please try again with the valid ones", status_code=401)
+            raise ResponseError(ResponseMessage.FAILED_INVALID_CREDENTIALS)
 
-        if user.is_verified:
-            return UserMapper().to_dto(user)
+        if not user.is_verified:
+            raise ResponseError(ResponseMessage.FAILED_EMAIL_NOT_VERIFIED, UserMapper().to_dto(user))
 
-        self.request_email_verification(user.id)
-
-        raise ResponseError(
-            "your email is not verified yet. please check your inbox for a verification link", status_code=403
-        )
+        return UserMapper().to_dto(user)
 
     #
     #
@@ -69,7 +67,7 @@ class AuthService:
         correct_password = check_password_hash(user.password, current_password)
 
         if not correct_password:
-            raise ResponseError("the current password is wrong", status_code=401)
+            raise ResponseError(ResponseMessage.FAILED_WRONG_CURRENT_PASSWORD)
 
         self.user_repo.update(
             filter=lambda User: User.id == user_id,
@@ -83,7 +81,7 @@ class AuthService:
         # get user data
         user = self.user_repo.find_first_with_error(
             filter=lambda User: User.email.ilike(email),
-            options={"error_msg": "there's no user with the entered email"},
+            options={"error_msg": ResponseMessage.FAILED_USER_NOT_FOUND_WITH_EMAIL},
         )
 
         temp_token = self.__create_temp_token(user.id, TemporaryTokenType.PASSWORD_RESET)
@@ -128,7 +126,7 @@ class AuthService:
         # get user data
         user = self.user_repo.find_first_with_error(
             filter=lambda User: User.id == user_id,
-            options={"error_msg": "there's no user with the entered id"},
+            options={"error_msg": ResponseMessage.FAILED_USER_NOT_FOUND_WITH_ID},
         )
 
         if user.is_verified:
@@ -201,5 +199,5 @@ class AuthService:
             filter=lambda Token: (Token.token == token)
             & (Token.expiration_date > datetime.datetime.now())
             & (Token.type == type),
-            options={"error_msg": "invalid token"},
+            options={"error_msg": ResponseMessage.FAILED_NOT_EXIST_OR_INVALID_TEMP_TOKEN},
         )

@@ -1,0 +1,31 @@
+tags:
+    - Authentication
+summary: User Auto Login
+description: Extract the user's data from the token if any.
+operationId: AutoLogin
+responses:
+    200:
+        description: Success
+        content:
+            application/json:
+                schema:
+                    oneOf:
+                        - $ref: '#/components/schemas/ResponseWithUserData'
+                        - $ref: '#/components/schemas/Response'
+                examples:
+                    example1:
+                        summary: with a user
+                        value:
+                            data:
+                                email: 'string'
+                                first_name: 'string'
+                                id: 'string'
+                                last_name: 'string'
+                                username: 'string'
+                            message: 'string'
+                    example2:
+                        summary: with no user
+                        value:
+                            message: 'string'
+    5xx:
+        $ref: '#/components/responses/ServerError'

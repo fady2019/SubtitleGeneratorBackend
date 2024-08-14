@@ -1,7 +1,7 @@
 from werkzeug.exceptions import HTTPException
 from functools import wraps
 
-from exceptions.response_error import ResponseError
+from response.response import ResponseError
 
 
 def app_error_handler(f):
@@ -10,11 +10,11 @@ def app_error_handler(f):
         try:
             return f(*args, **kwargs)
         except ResponseError as err:
-            return err.as_response()
+            return err
         except HTTPException as err:
-            return ResponseError(err.description, err.code).as_response()
+            return ResponseError({"msg": err.description, "status_code": err.code})
         except Exception as err:
             print(type(err), err)
-            return ResponseError("server error", 500).as_response()
+            return ResponseError({"msg": "server error", "status_code": 500})
 
     return decorated_function

@@ -1,7 +1,6 @@
 import jwt
 
 from helpers.date import add_to_datetime, is_in_future
-from exceptions.response_error import ResponseError
 
 
 def generate_token_from_payload(payload: dict, expire_in_hours: int, private_key: str, algorithm="RS256"):
@@ -23,6 +22,6 @@ def extract_payload_from_token(token: str, public_key: str, algorithms: list[str
     payload: dict = jwt.decode(token, key=public_key, algorithms=algorithms)
 
     if not ignore_exp and not is_in_future(payload["expiration_date"] or 0):
-        raise ResponseError("token expired", status_code=401)
+        raise Exception("token expired")
 
     return payload["data"]

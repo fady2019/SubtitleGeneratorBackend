@@ -1,13 +1,14 @@
-from flask import Response, request, g
+from flask import request, g
 from functools import wraps
 from typing import Callable, TypedDict
 import os, base64
 
+from response.response import Response, ResponseError
+from response.response_messages import ResponseMessage
 from db.repositories.user import UserRepository
 from dtos_mappers.user import UserMapper
 from helpers.cookies import set_cookie, delete_cookie
 from helpers.jwt import generate_token_from_payload, extract_payload_from_token
-from exceptions.response_error import ResponseError
 
 
 JWT_EXP_IN_HOURS = float(os.getenv("JWT_AUTH_TOKEN_EXP_IN_HOURS", "1"))
@@ -61,7 +62,7 @@ def validate_token(ignore_exp=False, ignore_invalid_token=False):
                 g.user = UserMapper().to_dto(user)
             except:
                 if not ignore_invalid_token:
-                    raise ResponseError("forbidden", status_code=403)
+                    raise ResponseError(ResponseMessage.FAILED_INVALID_AUTH_TOKEN)
 
             return f(*args, **kwargs)
 

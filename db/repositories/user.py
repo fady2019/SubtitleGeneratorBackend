@@ -3,7 +3,7 @@ from db.repositories.repository.update_repository import UpdateRepository
 from db.repositories.repository.find_repository import FindRepository
 from db.entities.user import UserEntity
 from db.entity_dicts.user_entity_dict import CreateUserEntityDict, UpdateUserEntityDict
-from exceptions.response_error import ResponseError
+from response.response import ResponseError
 
 
 class UserRepository(
@@ -40,7 +40,7 @@ class UserRepository(
         user_entity = options["session"].query(UserEntity).filter(filter(UserEntity)).first()
 
         if not user_entity:
-            raise ResponseError(options["error_msg"] or "user not found", status_code=404)
+            raise ResponseError(options["error_msg"] or {"msg": "user not found", "status_code": 404})
 
         return user_entity
 

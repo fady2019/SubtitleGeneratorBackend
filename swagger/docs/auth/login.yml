@@ -15,9 +15,19 @@ responses:
     400:
         $ref: '#/components/responses/BadRequestError'
     401:
-        $ref: '#/components/responses/UnauthorizedError'
+        description: Unauthorized (Invalid Credentials)
+        content:
+            application/json:
+                schema:
+                    $ref: '#/components/schemas/Response'
+
     403:
-        $ref: '#/components/responses/ForbiddenError'
+        description: Forbidden (Email not verified yet)
+        content:
+            application/json:
+                schema:
+                    $ref: '#/components/schemas/ResponseWithUserData'
+
     422:
         $ref: '#/components/responses/UnprocessableEntityError'
     5xx:

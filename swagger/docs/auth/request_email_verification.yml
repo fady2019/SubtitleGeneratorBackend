@@ -11,10 +11,14 @@ parameters:
           type: string
 responses:
     200:
-        description: Success
-    400:
-        $ref: '#/components/responses/BadRequestError'
+        $ref: '#/components/responses/NoDataResponse'
     404:
-        $ref: '#/components/responses/NotFoundError'
+        description: Not Found (User id not exist)
+        content:
+            application/json:
+                schema:
+                    $ref: '#/components/schemas/Response'
+    422:
+        $ref: '#/components/responses/UnprocessableEntityError'
     5xx:
         $ref: '#/components/responses/ServerError'
