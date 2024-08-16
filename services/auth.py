@@ -1,4 +1,4 @@
-from flask import render_template, request
+from flask import render_template
 from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy.orm import Session
 import os, secrets, datetime
@@ -7,13 +7,13 @@ from db.repositories.user import UserRepository
 from db.repositories.temporary_token import TemporaryTokenRepository
 from db.entities.temporary_token import TemporaryTokenType
 from dtos_mappers.user import UserMapper
-from helpers.email import send_email
+from celery_tasks.emails import EmailTasks
 from helpers.date import add_to_datetime
 from response.response import ResponseError
 from response.response_messages import ResponseMessage
 
 
-TEMP_TOKEN_HOST_URL = os.getenv("TEMP_TOKEN_HOST_URL")
+CLIENT_HOST_URL = os.getenv("CLIENT_HOST_URL")
 TEMP_TOKEN_LENGTH = int(os.getenv("RESET_PASSWORD_TOKEN_LENGTH", "32"))
 TEMP_TOKEN_EXP_IN_HOURS = float(os.getenv("TEMP_TOKEN_EXP_IN_HOURS", "1"))
 
@@ -90,12 +90,12 @@ class AuthService:
             "emails/reset_password.html",
             **{
                 "user_name": f"{user.first_name} {user.last_name}",
-                "reset_link": f"{TEMP_TOKEN_HOST_URL or request.host_url}reset-password/{temp_token.token}",
+                "reset_link": f"{CLIENT_HOST_URL}/reset-password/{temp_token.token}",
                 "link_expiration_date": temp_token.expiration_date,
             },
         )
 
-        send_email("Password Reset", [user.email], html=email_template)
+        EmailTasks.send_email.apply_async(args=["Password Reset", [user.email]], kwargs={"html": email_template})
 
     #
     #
@@ -138,12 +138,12 @@ class AuthService:
             "emails/verify_email.html",
             **{
                 "user_name": f"{user.first_name} {user.last_name}",
-                "verification_link": f"{TEMP_TOKEN_HOST_URL or request.host_url}verify-password/{temp_token.token}",
+                "verification_link": f"{CLIENT_HOST_URL}/verify-password/{temp_token.token}",
                 "link_expiration_date": temp_token.expiration_date,
             },
         )
 
-        send_email("Email Verification", [user.email], html=email_template)
+        EmailTasks.send_email.apply_async(args=["Email Verification", [user.email]], kwargs={"html": email_template})
 
     #
     #

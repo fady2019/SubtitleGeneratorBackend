@@ -10,6 +10,7 @@ from swagger import config_swagger
 
 
 app = AppFactorySingleton.create()
+celery = app.extensions["celery"]
 
 app.register_blueprint(api_blueprint)
 config_swagger(app)

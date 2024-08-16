@@ -8,3 +8,5 @@ pyjwt
 cryptography
 flasgger
 Flask-Mail
+redis
+celery
