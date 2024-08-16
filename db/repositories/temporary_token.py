@@ -13,13 +13,21 @@ class TemporaryTokenRepository(
 ):
     # CERATE
     def _execute_create(self, data, options):
-        temp_token_entity = TemporaryTokenEntity(
-            token=data["token"], expiration_date=data["expiration_date"], type=data["type"], user_id=data["user_id"]
-        )
+        token_entities = []
 
-        options["session"].add(temp_token_entity)
+        for token_data in data:
+            token_entity = TemporaryTokenEntity(
+                token=token_data["token"],
+                expiration_date=token_data["expiration_date"],
+                type=token_data["type"],
+                user_id=token_data["user_id"],
+            )
 
-        return temp_token_entity
+            token_entities.append(token_entity)
+
+        options["session"].add_all(token_entities)
+
+        return token_entities
 
     #
     #
@@ -27,23 +35,15 @@ class TemporaryTokenRepository(
     # DELETE
     def _execute_delete(self, filter, options):
         options["session"].query(TemporaryTokenEntity).filter(filter(TemporaryTokenEntity)).delete()
-        return None
 
     #
     #
 
     # FIND
-    def _execute_find_first(self, filter, options):
-        return options["session"].query(TemporaryTokenEntity).filter(filter(TemporaryTokenEntity)).first()
+    def _execute_find(self, filter, options):
+        token_entities = options["session"].query(TemporaryTokenEntity).filter(filter(TemporaryTokenEntity)).all()
 
-    #
-    #
-
-    # FIND WITH ERROR
-    def _execute_find_first_with_error(self, filter, options):
-        temp_token_entity = options["session"].query(TemporaryTokenEntity).filter(filter(TemporaryTokenEntity)).first()
-
-        if not temp_token_entity:
+        if not token_entities and options["throw_if_not_found"]:
             raise ResponseError(options["error_msg"] or {"msg": "token not found", "status_code": 404})
 
-        return temp_token_entity
+        return token_entities

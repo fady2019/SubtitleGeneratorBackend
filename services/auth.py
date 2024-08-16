@@ -39,8 +39,9 @@ class AuthService:
     def login(self, data: dict):
         username_or_email, password = data["username_or_email"], data["password"]
 
-        user = self.user_repo.find_first(
-            filter=lambda User: User.email.ilike(username_or_email) | User.username.ilike(username_or_email)
+        user = self.user_repo.find(
+            filter=lambda User: User.email.ilike(username_or_email) | User.username.ilike(username_or_email),
+            options={"return_first": True},
         )
 
         valid_credentials = user != None and check_password_hash(user.password, password)
@@ -62,7 +63,9 @@ class AuthService:
 
         current_password, new_password = data["current_password"], data["new_password"]
 
-        user = self.user_repo.find_first_with_error(filter=lambda User: User.id == user_id)
+        user = self.user_repo.find(
+            filter=lambda User: User.id == user_id, options={"throw_if_not_found": True, "return_first": True}
+        )
 
         correct_password = check_password_hash(user.password, current_password)
 
@@ -79,9 +82,13 @@ class AuthService:
 
     def request_password_reset(self, email: str):
         # get user data
-        user = self.user_repo.find_first_with_error(
+        user = self.user_repo.find(
             filter=lambda User: User.email.ilike(email),
-            options={"error_msg": ResponseMessage.FAILED_USER_NOT_FOUND_WITH_EMAIL},
+            options={
+                "throw_if_not_found": True,
+                "error_msg": ResponseMessage.FAILED_USER_NOT_FOUND_WITH_EMAIL,
+                "return_first": True,
+            },
         )
 
         temp_token = self.__create_temp_token(user.id, TemporaryTokenType.PASSWORD_RESET)
@@ -124,13 +131,17 @@ class AuthService:
 
     def request_email_verification(self, user_id: str):
         # get user data
-        user = self.user_repo.find_first_with_error(
+        user = self.user_repo.find(
             filter=lambda User: User.id == user_id,
-            options={"error_msg": ResponseMessage.FAILED_USER_NOT_FOUND_WITH_ID},
+            options={
+                "throw_if_not_found": True,
+                "error_msg": ResponseMessage.FAILED_USER_NOT_FOUND_WITH_ID,
+                "return_first": True,
+            },
         )
 
         if user.is_verified:
-            return
+            return True
 
         temp_token = self.__create_temp_token(user.id, TemporaryTokenType.EMAIL_VERIFICATION)
 
@@ -144,6 +155,8 @@ class AuthService:
         )
 
         EmailTasks.send_email.apply_async(args=["Email Verification", [user.email]], kwargs={"html": email_template})
+
+        return False
 
     #
     #
@@ -195,9 +208,13 @@ class AuthService:
     #
 
     def __find_temp_token(self, token: str, type: TemporaryTokenType):
-        return self.temp_token_repo.find_first_with_error(
+        return self.temp_token_repo.find(
             filter=lambda Token: (Token.token == token)
             & (Token.expiration_date > datetime.datetime.now())
             & (Token.type == type),
-            options={"error_msg": ResponseMessage.FAILED_NOT_EXIST_OR_INVALID_TEMP_TOKEN},
+            options={
+                "throw_if_not_found": True,
+                "error_msg": ResponseMessage.FAILED_NOT_EXIST_OR_INVALID_TEMP_TOKEN,
+                "return_first": True,
+            },
         )

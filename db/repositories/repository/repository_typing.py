@@ -2,8 +2,6 @@ from sqlalchemy import ColumnElement
 from sqlalchemy.orm import Session, DeclarativeMeta
 from typing import Callable, TypeVar, TypedDict
 
-from response.response_messages import ResponseMessageBase, ResponseMsgInfo
-
 
 TEntity = TypeVar("Entity", bound=type[DeclarativeMeta])
 TTransactionCbReturn = TypeVar("TransactionCbReturn")
@@ -14,21 +12,11 @@ class MethodOptions(TypedDict):
     session: Session | None
 
 
-class FindWithErrorOptions(MethodOptions):
-    error_msg: ResponseMessageBase | ResponseMsgInfo | None
+TOptions = TypeVar("Options", bound=MethodOptions)
 
 
-def set_default_method_options(options: MethodOptions) -> MethodOptions:
-    default = {"session": None}
-
-    if options != None:
-        default.update(options)
-
-    return default
-
-
-def set_default_find_with_error_options(options: FindWithErrorOptions) -> FindWithErrorOptions:
-    default = {"session": None, "error_msg": None}
+def update_options(options: TOptions, get_default: Callable[[], TOptions]) -> TOptions:
+    default = get_default() or {}
 
     if options != None:
         default.update(options)

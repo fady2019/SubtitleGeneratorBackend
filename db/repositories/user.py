@@ -13,36 +13,34 @@ class UserRepository(
 ):
     # CERATE
     def _execute_create(self, data, options):
-        user_entity = UserEntity(
-            first_name=data["first_name"],
-            last_name=data["last_name"],
-            username=data["username"],
-            email=data["email"],
-            password=data["password"],
-        )
+        user_entities = []
 
-        options["session"].add(user_entity)
+        for user_data in data:
+            user_entity = UserEntity(
+                first_name=user_data["first_name"],
+                last_name=user_data["last_name"],
+                username=user_data["username"],
+                email=user_data["email"],
+                password=user_data["password"],
+            )
 
-        return user_entity
+            user_entities.append(user_entity)
 
-    #
-    #
+        options["session"].add_all(user_entities)
 
-    # FIND FIRST
-    def _execute_find_first(self, filter, options):
-        return options["session"].query(UserEntity).filter(filter(UserEntity)).first()
+        return user_entities
 
     #
     #
 
-    # FIND FIRST WITH ERROR
-    def _execute_find_first_with_error(self, filter, options):
-        user_entity = options["session"].query(UserEntity).filter(filter(UserEntity)).first()
+    # FIND
+    def _execute_find(self, filter, options):
+        user_entities = options["session"].query(UserEntity).filter(filter(UserEntity)).all()
 
-        if not user_entity:
-            raise ResponseError(options["error_msg"] or {"msg": "user not found", "status_code": 404})
+        if not user_entities and options["throw_if_not_found"]:
+            raise ResponseError(options["error_msg"] or {"msg": "user(s) not found", "status_code": 404})
 
-        return user_entity
+        return user_entities
 
     #
     #
@@ -50,4 +48,8 @@ class UserRepository(
     # UPDATE
     def _execute_update(self, filter, new_data, options):
         options["session"].query(UserEntity).filter(filter(UserEntity)).update(new_data)
-        return None
+
+        if not options["return_updated"]:
+            return None
+
+        return options["session"].query(UserEntity).filter(filter(UserEntity)).all()

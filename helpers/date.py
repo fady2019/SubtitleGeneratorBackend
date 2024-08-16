@@ -23,7 +23,7 @@ def format_date(value: datetime.datetime, format="%b %d, %Y %I:%M:%S %p"):
 
 
 def add_to_datetime(
-    start_datetime: datetime.datetime = datetime.datetime.now(),
+    start_datetime: datetime.datetime = None,
     microseconds: float = 0,
     milliseconds: float = 0,
     seconds: float = 0,
@@ -32,7 +32,7 @@ def add_to_datetime(
     days: float = 0,
     weeks: float = 0,
 ):
-    return start_datetime + datetime.timedelta(
+    return (start_datetime or datetime.datetime.now()) + datetime.timedelta(
         microseconds=microseconds,
         milliseconds=milliseconds,
         seconds=seconds,

@@ -92,7 +92,11 @@ def reset_password():
 @auth_blueprint.route("/request-email-verification/<user_id>")
 @input_validator(input_source=RequestViewArgs(), validator=request_email_verification_validator)
 def request_email_verification(user_id: str):
-    auth_service.request_email_verification(user_id)
+    already_verified = auth_service.request_email_verification(user_id)
+
+    if already_verified:
+        return Response(ResponseMessage.SUCCESSFUL_REQUEST_EMAIL_VERIFICATION_ALREADY_VERIFIED)
+
     return Response(ResponseMessage.SUCCESSFUL_REQUEST_EMAIL_VERIFICATION)
 
 

@@ -54,10 +54,10 @@ def validate_token(ignore_exp=False, ignore_invalid_token=False):
 
                 payload: Payload = extract_payload_from_token(token, JWT_PUBLIC_KEY, ignore_exp=ignore_exp)
 
-                user = user_repo.find_first(filter=lambda User: User.id == payload["user_id"])
-
-                if not user:
-                    raise Exception()
+                user = user_repo.find(
+                    filter=lambda User: User.id == payload["user_id"],
+                    options={"throw_if_not_found": True, "return_first": True},
+                )
 
                 g.user = UserMapper().to_dto(user)
             except:

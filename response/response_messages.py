@@ -46,6 +46,7 @@ class ResponseMessage(ResponseMessageBase):
         "status_code": 200,
     }
     SUCCESSFUL_EMAIL_VERIFICATION = {"msg": "email successfully verified", "status_code": 200}
+    SUCCESSFUL_REQUEST_EMAIL_VERIFICATION_ALREADY_VERIFIED = {"msg": "your email is already verified", "status_code": 200}
 
     #
     #
