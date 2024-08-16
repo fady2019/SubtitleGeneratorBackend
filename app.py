@@ -1,8 +1,11 @@
+from celery import Celery
+from celery.schedules import crontab
 from dotenv import load_dotenv
 import inspect, os
 
 load_dotenv()
 
+import celery_tasks.temporary_tokens as _
 from routes.api import api_blueprint
 from app_factory import AppFactorySingleton
 from decorators.errors.app_error_handler import app_error_handler
@@ -10,7 +13,16 @@ from swagger import config_swagger
 
 
 app = AppFactorySingleton.create()
-celery = app.extensions["celery"]
+celery: Celery = app.extensions["celery"]
+
+
+celery.conf.beat_schedule = {
+    "clear-expired-tokens": {
+        "task": "celery_tasks.temporary_tokens.clear_expired_tokens",
+        "schedule": crontab(minute=0, hour=os.getenv("TEMP_TOKEN_CLEANING_CRONJOB_HOUR", "*/6")),
+    },
+}
+
 
 app.register_blueprint(api_blueprint)
 config_swagger(app)

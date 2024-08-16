@@ -109,3 +109,9 @@ dmypy.json
 # Sublime Text
 *.sublime-project
 *.sublime-workspace
+
+# Celery and Redis files
+*.bak
+*.dir
+*.dat
+*.rdb
