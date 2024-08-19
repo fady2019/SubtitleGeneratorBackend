@@ -34,8 +34,8 @@ class UserRepository(
     #
 
     # FIND
-    def _execute_find(self, filter, options):
-        user_entities = options["session"].query(UserEntity).filter(filter(UserEntity)).all()
+    def _execute_find(self, filter, order_by, options):
+        user_entities = options["session"].query(UserEntity).filter(filter(UserEntity)).order_by(order_by(UserEntity)).all()
 
         if not user_entities and options["throw_if_not_found"]:
             raise ResponseError(options["error_msg"] or {"msg": "user(s) not found", "status_code": 404})

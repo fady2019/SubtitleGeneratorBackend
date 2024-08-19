@@ -40,8 +40,14 @@ class TemporaryTokenRepository(
     #
 
     # FIND
-    def _execute_find(self, filter, options):
-        token_entities = options["session"].query(TemporaryTokenEntity).filter(filter(TemporaryTokenEntity)).all()
+    def _execute_find(self, filter, order_by, options):
+        token_entities = (
+            options["session"]
+            .query(TemporaryTokenEntity)
+            .filter(filter(TemporaryTokenEntity))
+            .order_by(order_by(TemporaryTokenEntity))
+            .all()
+        )
 
         if not token_entities and options["throw_if_not_found"]:
             raise ResponseError(options["error_msg"] or {"msg": "token not found", "status_code": 404})

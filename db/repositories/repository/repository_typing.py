@@ -1,11 +1,12 @@
-from sqlalchemy import ColumnElement
+from sqlalchemy import ColumnElement, UnaryExpression
 from sqlalchemy.orm import Session, DeclarativeMeta
-from typing import Callable, TypeVar, TypedDict
+from typing import Callable, TypeVar, TypedDict, Union, Sequence
 
 
 TEntity = TypeVar("Entity", bound=type[DeclarativeMeta])
 TTransactionCbReturn = TypeVar("TransactionCbReturn")
 TFilter = Callable[[type[TEntity]], ColumnElement[bool]]
+TOrderBy = Callable[[type[TEntity]], Union[ColumnElement, UnaryExpression, Sequence[Union[ColumnElement, UnaryExpression]]]]
 
 
 class MethodOptions(TypedDict):
