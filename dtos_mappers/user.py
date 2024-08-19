@@ -3,15 +3,15 @@ from db.entities.user import UserEntity
 from dtos.user import UserDTO
 
 
-class UserMapper(Mapper):
-    def to_dto(self, entity: UserEntity | None) -> UserDTO | None:
+class UserMapper(Mapper[UserEntity, UserDTO]):
+    def to_dto(self, entity):
         if not entity:
             return None
 
-        return {
-            "id": str(entity.id),
-            "first_name": entity.first_name,
-            "last_name": entity.last_name,
-            "username": entity.username,
-            "email": entity.email,
-        }
+        return UserDTO(
+            id=str(entity.id),
+            first_name=entity.first_name,
+            last_name=entity.last_name,
+            username=entity.username,
+            email=entity.email,
+        )
