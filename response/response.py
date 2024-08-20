@@ -1,16 +1,24 @@
 from flask import Response as FlaskResponse
+from typing import Union, Type
 import json
 
 from response.response_messages import ResponseMessageBase, ResponseMsgInfo
 
 
+class NoResponseBody:
+    pass
+
+
 class Response(FlaskResponse):
     def __init__(
-        self, response_msg: ResponseMessageBase | ResponseMsgInfo, data: dict = None, mimetype: str = "application/json"
+        self,
+        response_msg: ResponseMessageBase | ResponseMsgInfo,
+        data: Union[dict, Type[NoResponseBody]] = NoResponseBody,
+        mimetype: str = "application/json",
     ):
         response_body = {}
 
-        if data:
+        if data is not NoResponseBody:
             response_body["data"] = data
 
         if isinstance(response_msg, ResponseMessageBase):
