@@ -27,12 +27,9 @@ def check_limit_rate(get_user_id: Callable[[], str], timeframe_in_mins: float, m
         def decorated_function(*args, **kwargs):
             user_id = get_user_id()
             action_key = f"{request.endpoint}:{user_id}"
-            attempts_count = redis_client.incr(action_key)
+            attempts_count = int(redis_client.get(action_key) or 0)
 
-            if attempts_count == 1:
-                redis_client.expire(action_key, timeframe_in_mins * 60)
-
-            if attempts_count > max_attempts:
+            if attempts_count == max_attempts:
                 wait_for = math.ceil(redis_client.ttl(action_key) / 60)
 
                 raise ResponseError(
@@ -42,7 +39,14 @@ def check_limit_rate(get_user_id: Callable[[], str], timeframe_in_mins: float, m
                     }
                 )
 
-            return f(*args, **kwargs)
+            response = f(*args, **kwargs)
+
+            attempts_count = redis_client.incr(action_key)
+
+            if attempts_count == 1:
+                redis_client.expire(action_key, timeframe_in_mins * 60)
+
+            return response
 
         return decorated_function
 
