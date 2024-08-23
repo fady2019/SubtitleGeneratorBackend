@@ -66,7 +66,7 @@ class SubtitleTasks:
                     "finish_date": datetime.datetime.now(),
                     "task_id": None,
                 },
-                options={"session": session, "return_updated": True},
+                options={"session": session},
             )
 
             segments_data = []

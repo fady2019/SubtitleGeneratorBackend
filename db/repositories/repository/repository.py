@@ -1,12 +1,16 @@
-from abc import ABC
+from abc import ABC, abstractmethod
 from sqlalchemy.orm import Session
 from typing import Callable
 
-from db.repositories.repository.repository_typing import TTransactionCbReturn
+from db.repositories.repository.repository_typing import TTransactionCbReturn, TEntity
 from db.db_config import create_session
 
 
 class Repository(ABC):
+    @abstractmethod
+    def _get_entity_type(self) -> type[TEntity]:
+        pass
+
     def start_transaction(self, callback: Callable[[Session], TTransactionCbReturn], default_session: Session | None = None):
         """
         Description

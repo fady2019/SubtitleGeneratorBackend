@@ -1,5 +1,5 @@
+from sqlalchemy import update
 from sqlalchemy.orm import Session
-from abc import abstractmethod
 from typing import Generic, TypeVar, List
 
 from db.repositories.repository.repository import Repository
@@ -11,26 +11,27 @@ TUpdateEntityDict = TypeVar("UpdateEntityDict", bound=UpdateEntityDict)
 
 
 class UpdateOptions(MethodOptions):
-    return_updated: bool | None
+    pass
 
 
 def get_default_update_options() -> UpdateOptions:
-    return {"session": None, "return_updated": False}
+    return {"session": None}
 
 
 class UpdateRepository(Repository, Generic[TEntity, TUpdateEntityDict]):
-    # UPDATE
-    @abstractmethod
-    def _execute_update(
-        self, filter: TFilter[TEntity], new_data: TUpdateEntityDict, options: UpdateOptions
-    ) -> List[TEntity] | None:
-        pass
-
-    def update(self, filter: TFilter[TEntity], new_data: TUpdateEntityDict, options: UpdateOptions | None = None):
+    def update(
+        self, filter: TFilter[TEntity], new_data: TUpdateEntityDict, options: UpdateOptions | None = None
+    ) -> List[TEntity]:
         options = update_options(options, get_default_update_options)
 
         def callback(session: Session):
-            options["session"] = session
-            return self._execute_update(filter, new_data, options)
+            # get the entity type
+            Entity = self._get_entity_type()
+            # update entities
+            query = update(Entity).where(filter(Entity)).values(**new_data).returning(Entity)
+            # save entities
+            result = session.execute(query)
+            # return updated entities
+            return [row.tuple()[0] for row in result.fetchall()]
 
         return self.start_transaction(callback=callback, default_session=options["session"])

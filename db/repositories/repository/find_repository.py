@@ -1,9 +1,9 @@
 from sqlalchemy.orm import Session
-from abc import abstractmethod
 from typing import Generic, List
 
 from db.repositories.repository.repository import Repository
 from db.repositories.repository.repository_typing import TFilter, TEntity, TOrderBy, MethodOptions, update_options
+from response.response import ResponseError
 from response.response_messages import ResponseMessageBase, ResponseMsgInfo
 
 
@@ -18,27 +18,29 @@ def get_default_find_options() -> FindOptions:
 
 
 class FindRepository(Repository, Generic[TEntity]):
-    # FIND FIRST
-    @abstractmethod
-    def _execute_find(
-        self, filter: TFilter[TEntity], order_by: TOrderBy[TEntity] | None, options: FindOptions
-    ) -> List[TEntity]:
-        pass
-
     def find(
         self,
         filter: TFilter[TEntity],
         order_by: TOrderBy[TEntity] | None = None,
         options: FindOptions | None = None,
-    ):
+    ) -> List[TEntity] | TEntity | None:
         options = update_options(options, get_default_find_options)
 
         if not order_by:
             order_by = lambda *args: None
 
         def callback(session: Session):
-            options["session"] = session
-            return self._execute_find(filter, order_by, options)
+            # get the entity type
+            Entity = self._get_entity_type()
+            # fetch entities
+            entities = session.query(Entity).filter(filter(Entity)).order_by(order_by(Entity)).all()
+
+            if not entities and options["throw_if_not_found"]:
+                default_msg = f'no record(s) found in "{Entity.__tablename__}" table'
+                raise ResponseError(options["error_msg"] or {"msg": default_msg, "status_code": 404})
+
+            # return entities
+            return entities
 
         entities = self.start_transaction(callback=callback, default_session=options["session"])
 

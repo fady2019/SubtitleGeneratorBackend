@@ -1,5 +1,4 @@
 from sqlalchemy.orm import Session
-from abc import abstractmethod
 from typing import Generic, TypeVar, List
 
 from db.repositories.repository.repository import Repository
@@ -19,20 +18,24 @@ def get_default_create_options() -> CreateOptions:
 
 
 class CreateRepository(Repository, Generic[TEntity, TCreateEntityDict]):
-    # CREATE
-    @abstractmethod
-    def _execute_create(self, data: List[TCreateEntityDict], options: CreateOptions) -> List[TEntity]:
-        pass
-
-    def create(self, data: TCreateEntityDict | List[TCreateEntityDict], options: CreateOptions | None = None):
+    def create(
+        self, data: TCreateEntityDict | List[TCreateEntityDict], options: CreateOptions | None = None
+    ) -> List[TEntity] | TEntity:
         options = update_options(options, get_default_create_options)
 
         is_list = isinstance(data, List)
 
         def callback(session: Session):
-            options["session"] = session
-            create_data = data if is_list else [data]
-            return self._execute_create(create_data, options)
+            # make sure that data is a list
+            data_list = data if is_list else [data]
+            # get the entity type
+            Entity = self._get_entity_type()
+            # create entities
+            entities = [Entity(**data) for data in data_list]
+            # save entities
+            session.add_all(entities)
+            # return entities
+            return entities
 
         entities = self.start_transaction(callback=callback, default_session=options["session"])
 
