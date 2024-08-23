@@ -18,6 +18,8 @@ from dtos_mappers.subtitle import SubtitleMapper
 TMP_STORAGE_PATH = os.path.join(*os.getenv("UPLOADED_AUDIOS_TMP_STORAGE_PATH", "tmp").split("/"))
 os.makedirs(TMP_STORAGE_PATH, exist_ok=True)
 
+MAX_NUMBER_OF_SUBTITLES_PER_USER = int(os.getenv("MAX_NUMBER_OF_SUBTITLES_PER_USER", 10))
+
 
 class SubtitlesService:
     def __init__(self) -> None:
@@ -48,6 +50,16 @@ class SubtitlesService:
     #
 
     def generate_subtitle(self, user_id: str, data: dict = None):
+        subtitle_count = self.subtitle_repo.count(filter=lambda Subtitle: Subtitle.user_id == user_id)
+
+        if subtitle_count == MAX_NUMBER_OF_SUBTITLES_PER_USER:
+            raise ResponseError(
+                {
+                    "msg": f"subtitles generation limit reached. you can only generate up to {MAX_NUMBER_OF_SUBTITLES_PER_USER} subtitle(s)",
+                    "status_code": 409,
+                }
+            )
+
         subtitle_entity = self.subtitle_repo.create({"user_id": user_id, "title": data["title"]})
         subtitle = self.subtitle_mapper.to_dto(subtitle_entity)
 

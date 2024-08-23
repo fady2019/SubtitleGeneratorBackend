@@ -13,8 +13,16 @@ class FindOptions(MethodOptions):
     return_first: bool | None
 
 
+class CountOptions(MethodOptions):
+    pass
+
+
 def get_default_find_options() -> FindOptions:
     return {"session": None, "throw_if_not_found": False, "error_msg": None, "return_first": False}
+
+
+def get_default_count_options() -> CountOptions:
+    return {"session": None}
 
 
 class FindRepository(Repository, Generic[TEntity]):
@@ -48,3 +56,14 @@ class FindRepository(Repository, Generic[TEntity]):
             return entities[0] if entities else None
 
         return entities
+
+    def count(self, filter: TFilter[TEntity], options: CountOptions | None = None) -> int:
+        options = update_options(options, get_default_count_options)
+
+        def callback(session: Session):
+            # get the entity type
+            Entity = self._get_entity_type()
+            # count entities
+            return session.query(Entity).filter(filter(Entity)).count()
+
+        return self.start_transaction(callback=callback, default_session=options["session"])

@@ -16,6 +16,12 @@ responses:
         $ref: '#/components/responses/BadRequestError'
     403:
         $ref: '#/components/responses/ForbiddenError'
+    409:
+        description: Conflict (Subtitles generation limit reached)
+        content:
+            application/json:
+                schema:
+                    $ref: '#/components/schemas/Response'
     422:
         $ref: '#/components/responses/UnprocessableEntityError'
     429:
