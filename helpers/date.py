@@ -45,3 +45,7 @@ def add_to_datetime(
 
 def is_in_future(value):
     return to_datetime(value) > datetime.datetime.now()
+
+
+def get_duration(delta: datetime.timedelta):
+    return str(delta).split(".")[0]

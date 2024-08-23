@@ -1,0 +1,24 @@
+tags:
+    - Generation
+summary: Begin Subtitle Generation
+description: Generate a new subtitle.
+operationId: GenerateSubtitle
+requestBody:
+    required: true
+    content:
+        multipart/form-data:
+            schema:
+                $ref: '#/components/schemas/GenerateSubtitle'
+responses:
+    200:
+        $ref: '#/components/responses/Subtitle'
+    400:
+        $ref: '#/components/responses/BadRequestError'
+    403:
+        $ref: '#/components/responses/ForbiddenError'
+    422:
+        $ref: '#/components/responses/UnprocessableEntityError'
+    429:
+        $ref: '#/components/responses/TooManyRequestsError'
+    5xx:
+        $ref: '#/components/responses/ServerError'

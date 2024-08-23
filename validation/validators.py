@@ -1,6 +1,7 @@
 from voluptuous import Coerce, All, Required, Email, Length, Invalid
-import regex as re
+from werkzeug.datastructures import FileStorage
 from uuid import UUID
+import regex as re
 
 
 from validation.shared import CustomInvalid
@@ -21,6 +22,23 @@ def valid_string(field_placeholder: str, msg: str = None):
 
 def valid_length(field_placeholder: str, min: int = None, max: int = None, msg: str = None):
     return Length(min=min, max=max, msg=msg or f"the {field_placeholder} should be between {min} and {max} characters")
+
+
+def valid_file(field_placeholder: str, supported_mimetypes: list[str] = []):
+    def validator(value):
+        if not isinstance(value, FileStorage):
+            raise Invalid(f"the {field_placeholder} should be a file")
+
+        for mimetype in supported_mimetypes:
+            if re.match(mimetype, value.mimetype):
+                return value
+
+        if len(supported_mimetypes) > 0:
+            raise Invalid(f"unsupported file type. only support {', '.join(set(supported_mimetypes))}")
+
+        return value
+
+    return validator
 
 
 def valid_name(field_placeholder: str):
@@ -48,7 +66,7 @@ def valid_username(field_placeholder: str):
 
 def unique_username(field_placeholder: str):
     def validator(username: str):
-        if user_repo.find_first(filter=lambda User: User.username.ilike(username)) != None:
+        if user_repo.find(filter=lambda User: User.username.ilike(username)):
             raise CustomInvalid(message=f"the {field_placeholder} should be unique", status_code=409)
 
         return username
@@ -70,7 +88,7 @@ def valid_email(field_placeholder: str):
 
 def unique_email(field_placeholder: str):
     def validator(email: str):
-        if user_repo.find_first(filter=lambda User: User.email.ilike(email)) != None:
+        if user_repo.find(filter=lambda User: User.email.ilike(email)):
             raise CustomInvalid(message=f"the {field_placeholder} should be unique", status_code=409)
 
         return email
@@ -105,6 +123,16 @@ def valid_uuid(field_placeholder: str):
             UUID(value)
         except:
             raise Invalid(f"invalid {field_placeholder}")
+
+    return validator
+
+
+def valid_subtitle_title(field_placeholder: str):
+    def validator(value: str):
+        if not bool(re.match(r"^[\w. -]+$", value)):
+            raise Invalid(
+                f"invalid {field_placeholder}, it should only contain letters, numbers, underscores, periods or/and hyphens"
+            )
 
     return validator
 
@@ -150,4 +178,13 @@ def password_validator(field_placeholder: str):
         valid_string(field_placeholder),
         valid_length(field_placeholder, min=8, max=32),
         valid_password(field_placeholder),
+    )
+
+
+# SUBTITLE INFO VALIDATORS
+def subtitle_title_validator(field_placeholder: str):
+    return All(
+        valid_string(field_placeholder),
+        valid_length(field_placeholder, 1, 100),
+        valid_subtitle_title(field_placeholder),
     )

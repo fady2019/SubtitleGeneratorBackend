@@ -5,6 +5,11 @@ import inspect, os
 
 load_dotenv()
 
+import db.entities.user as _
+import db.entities.temporary_token as _
+import db.entities.subtitle as _
+import db.entities.segment as _
+
 import celery_tasks.temporary_tokens as _
 from routes.api import api_blueprint
 from app_factory import AppFactorySingleton

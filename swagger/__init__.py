@@ -17,7 +17,13 @@ def config_swagger(app: Flask):
             "route": "/auth.json",
             "rule_filter": lambda rule: "api.auth" in rule.endpoint,
             "name": "Authentication",
-        }
+        },
+        {
+            "endpoint": "subtitles",
+            "route": "/subtitles.json",
+            "rule_filter": lambda rule: "api.subtitles" in rule.endpoint,
+            "name": "Subtitles",
+        },
     ]
 
     return Swagger(

@@ -1,0 +1,29 @@
+{% extends "emails/base.html" %}
+<!--  -->
+<!--  -->
+{% set title="Subtitle Generation Failed" %}
+<!--  -->
+<!--  -->
+{% block email_body %}
+<p style="line-height: 20px">Hi {{ user_name }},</p>
+
+<p style="line-height: 20px">
+    We're sorry to inform you that there was an issue while generating your subtitle. Unfortunately, the
+    process did not complete successfully.
+</p>
+
+<h4 style="margin-bottom: 8px">Subtile Information</h4>
+<p style="line-height: 20px; margin-top: 0">
+    <strong>Title:</strong> {{ subtitle_title }}
+    <br />
+    <strong>Start Date:</strong> {{ start_date | format_date("%A, %B %d, %Y at %I:%M %p")}}
+    <br />
+    <strong>Link:</strong> <a href="{{ subtitle_link }}" target="_blank">{{ subtitle_link }}</a>
+</p>
+
+<p style="line-height: 20px">
+    Please try to generate the subtitle again. If you still have problems, don't hesitate to contact us for
+    help.
+</p>
+
+{% endblock %}

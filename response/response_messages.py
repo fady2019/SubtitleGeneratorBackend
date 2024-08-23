@@ -47,6 +47,19 @@ class ResponseMessage(ResponseMessageBase):
     }
     SUCCESSFUL_EMAIL_VERIFICATION = {"msg": "email successfully verified", "status_code": 200}
     SUCCESSFUL_REQUEST_EMAIL_VERIFICATION_ALREADY_VERIFIED = {"msg": "your email is already verified", "status_code": 200}
+    SUCCESSFUL_SUBTITLES_FETCHING = {"msg": "subtitles successfully fetched", "status_code": 200}
+    SUCCESSFUL_SUBTITLE_FETCHING = {"msg": "subtitle successfully fetched", "status_code": 200}
+    SUCCESSFUL_SUBTITLE_GENERATION_BEGINNING = {
+        "msg": "subtitle generation successfully began. this process may take some time. we will send you an email as soon as it is complete",
+        "status_code": 200,
+    }
+    SUCCESSFUL_SUBTITLE_GENERATION_CANCELING = {"msg": "subtitle generation successfully canceled", "status_code": 200}
+    SUCCESSFUL_SUBTITLE_GENERATION_REBEGINNING = {
+        "msg": "subtitle generation successfully rebegan. this process may take some time. we will send you an email as soon as it is complete",
+        "status_code": 200,
+    }
+    SUCCESSFUL_SUBTITLE_EDITING = {"msg": "subtitle successfully edited", "status_code": 200}
+    SUCCESSFUL_SUBTITLE_DELETION = {"msg": "subtitle successfully deleted", "status_code": 200}
 
     #
     #
@@ -67,3 +80,17 @@ class ResponseMessage(ResponseMessageBase):
     # 404
     FAILED_USER_NOT_FOUND_WITH_EMAIL = {"msg": "there's no user with the entered email", "status_code": 404}
     FAILED_USER_NOT_FOUND_WITH_ID = {"msg": "there's no user with the entered id", "status_code": 404}
+    FAILED_USER_HAS_NO_SUBTITLE_WITH_ID = {"msg": "you don't have a subtitle with the entered id", "status_code": 404}
+    FAILED_SUBTITLE_NOT_FOUND_WITH_ID = {"msg": "there's no a subtitle with the entered id", "status_code": 404}
+    FAILED_AUDIO_FILE_NOT_FOUND = {"msg": "can't find the audio file", "status_code": 404}
+    # 409
+    FAILED_CANCELING_INACTIVE_SUBTITLE_GENERATION = {
+        "msg": "inactive subtitle generation can't be canceled",
+        "status_code": 409,
+    }
+    FAILED_SUBTITLE_REGENERATION_INVALID_STATUS = {
+        "msg": "only failed and canceled subtitles can be regenerated",
+        "status_code": 409,
+    }
+    FAILED_EDITING_ACTIVE_SUBTITLE_GENERATION = {"msg": "can't edit active subtitle generation", "status_code": 409}
+    FAILED_DELETING_ACTIVE_SUBTITLE_GENERATION = {"msg": "can't delete active subtitle generation", "status_code": 409}

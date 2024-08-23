@@ -115,3 +115,5 @@ dmypy.json
 *.dir
 *.dat
 *.rdb
+
+tmp

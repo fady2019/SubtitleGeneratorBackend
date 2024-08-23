@@ -1,0 +1,24 @@
+tags:
+    - Cancellation & Deletion
+summary: Delete Subtitle
+description: Delete a subtitle. The subtitle status shouldn't be "in_progress".
+operationId: DeleteSubtitleGeneration
+parameters:
+    - $ref: '#/components/parameters/SubtitleIdInPath'
+responses:
+    200:
+        $ref: '#/components/responses/NoDataResponse'
+    403:
+        $ref: '#/components/responses/ForbiddenError'
+    404:
+        $ref: '#/components/responses/SubtitleNotFound'
+    409:
+        description: Conflict (Invalid subtitle status "in_progress")
+        content:
+            application/json:
+                schema:
+                    $ref: '#/components/schemas/Response'
+    422:
+        $ref: '#/components/responses/UnprocessableEntityError'
+    5xx:
+        $ref: '#/components/responses/ServerError'

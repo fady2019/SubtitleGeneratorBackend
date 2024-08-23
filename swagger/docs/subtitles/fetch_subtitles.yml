@@ -1,0 +1,23 @@
+tags:
+    - Fetch
+summary: Fetch Subtitles
+description: Get all the subtitles of the current user.
+operationId: FetchSubtitles
+responses:
+    200:
+        description: Success
+        content:
+            application/json:
+                schema:
+                    type: object
+                    properties:
+                        data:
+                            type: array
+                            items:
+                                $ref: "#/components/schemas/Subtitle"
+                        message:
+                            type: string
+    403:
+        $ref: "#/components/responses/ForbiddenError"
+    5xx:
+        $ref: "#/components/responses/ServerError"

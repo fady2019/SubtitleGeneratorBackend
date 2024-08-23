@@ -17,6 +17,7 @@ class UserEntity(Base):
     is_verified = Column(Boolean, nullable=False, default=False, info={"excluded": True})
 
     temp_tokens = relationship("TemporaryTokenEntity", back_populates="user", cascade="all, delete-orphan")
+    subtitles = relationship("SubtitleEntity", back_populates="user", cascade="all, delete-orphan")
 
 
 Base.metadata.create_all(bind=DB_ENGINE)

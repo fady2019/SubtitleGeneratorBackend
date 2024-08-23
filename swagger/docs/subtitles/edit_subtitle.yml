@@ -1,0 +1,32 @@
+tags:
+    - Edit
+summary: Edit Subtitle
+description: Edit a specific subtitle and get the updated version.
+operationId: EditSubtitle
+parameters:
+    - $ref: '#/components/parameters/SubtitleIdInPath'
+requestBody:
+    required: true
+    content:
+        application/json:
+            schema:
+                $ref: '#/components/schemas/EditSubtitle'
+responses:
+    200:
+        $ref: '#/components/responses/Subtitle'
+    400:
+        $ref: '#/components/responses/BadRequestError'
+    403:
+        $ref: '#/components/responses/ForbiddenError'
+    404:
+        $ref: '#/components/responses/SubtitleNotFound'
+    409:
+        description: Conflict (Invalid subtitle status "in_progress")
+        content:
+            application/json:
+                schema:
+                    $ref: '#/components/schemas/Response'
+    422:
+        $ref: '#/components/responses/UnprocessableEntityError'
+    5xx:
+        $ref: '#/components/responses/ServerError'

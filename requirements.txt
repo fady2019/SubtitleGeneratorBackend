@@ -10,3 +10,5 @@ flasgger
 Flask-Mail
 redis
 celery
+openai-whisper
+numpy<2

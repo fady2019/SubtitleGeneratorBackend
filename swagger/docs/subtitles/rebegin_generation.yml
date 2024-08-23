@@ -1,0 +1,28 @@
+tags:
+    - Generation
+summary: Rebegin Subtitle Generation
+description: Regenerate a previously failed / canceled subtitle.
+operationId: RegenerateSubtitle
+parameters:
+    - $ref: '#/components/parameters/SubtitleIdInPath'
+responses:
+    200:
+        $ref: '#/components/responses/NoDataResponse'
+    403:
+        $ref: '#/components/responses/ForbiddenError'
+    404:
+        description: Not Found (Subtitle not exist | Audio file not exist)
+        content:
+            application/json:
+                schema:
+                    $ref: '#/components/schemas/Response'
+    409:
+        description: Conflict (Invalid subtitle status "not failed nor canceled")
+        content:
+            application/json:
+                schema:
+                    $ref: '#/components/schemas/Response'
+    422:
+        $ref: '#/components/responses/UnprocessableEntityError'
+    5xx:
+        $ref: '#/components/responses/ServerError'

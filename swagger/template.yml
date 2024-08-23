@@ -64,6 +64,61 @@ components:
                 email:
                     type: string
         #
+        GenerateSubtitle:
+            type: object
+            required:
+                - title
+                - audio
+            properties:
+                title:
+                    type: string
+                audio:
+                    type: string
+                    format: binary
+        #
+        EditSubtitle:
+            type: object
+            properties:
+                title:
+                    type: string
+        #
+        Subtitle:
+            type: object
+            properties:
+                id:
+                    type: string
+                title:
+                    type: string
+                status:
+                    type: string
+                    enum: ['in_progress', 'canceled', 'completed', 'failed']
+                language:
+                    type: string
+                    nullable: true
+                start_date:
+                    type: string
+                    format: date
+                finish_date:
+                    type: string
+                    format: date
+                    nullable: true
+                user_id:
+                    type: string
+        #
+        Segment:
+            type: object
+            properties:
+                segment_id:
+                    type: string
+                subtitle_id:
+                    type: string
+                text:
+                    type: string
+                start:
+                    type: number
+                end:
+                    type: number
+        #
         Response:
             type: object
             properties:
@@ -81,6 +136,7 @@ components:
     #
     #
     #
+
     responses:
         SuccessfulAuth:
             description: Success
@@ -101,6 +157,18 @@ components:
                     schema:
                         $ref: '#/components/schemas/Response'
         #
+        Subtitle:
+            description: Success
+            content:
+                application/json:
+                    schema:
+                        type: object
+                        properties:
+                            data:
+                                $ref: '#/components/schemas/Subtitle'
+                            message:
+                                type: string
+        #
         BadRequestError:
             description: Bad Request
             content:
@@ -117,6 +185,13 @@ components:
         #
         ForbiddenError:
             description: Forbidden (Require login)
+            content:
+                application/json:
+                    schema:
+                        $ref: '#/components/schemas/Response'
+
+        SubtitleNotFound:
+            description: Not Found (Subtitle not exist)
             content:
                 application/json:
                     schema:
@@ -143,13 +218,28 @@ components:
                     schema:
                         $ref: '#/components/schemas/Response'
         #
+        TooManyRequestsError:
+            description: Too Many Requests
+            content:
+                application/json:
+                    schema:
+                        $ref: '#/components/schemas/Response'
+        #
         ServerError:
             description: Server Issue
             content:
                 application/json:
                     schema:
                         $ref: '#/components/schemas/Response'
+
     #
     #
     #
-    # parameters:
+
+    parameters:
+        SubtitleIdInPath:
+            in: path
+            name: subtitle_id
+            required: True
+            schema:
+                type: string

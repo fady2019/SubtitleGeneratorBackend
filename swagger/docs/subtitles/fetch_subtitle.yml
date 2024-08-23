@@ -1,0 +1,27 @@
+tags:
+    - Fetch
+summary: Fetch Subtitle
+description: Get a subtitle with its id. A user can get the subtitle if they own it otherwise null is returned.
+operationId: FetchSubtitle
+parameters:
+    - $ref: '#/components/parameters/SubtitleIdInPath'
+responses:
+    200:
+        description: Success
+        content:
+            application/json:
+                schema:
+                    type: object
+                    properties:
+                        data:
+                            nullable: true
+                            allOf:
+                                - $ref: '#/components/schemas/Subtitle'
+                        message:
+                            type: string
+    403:
+        $ref: '#/components/responses/ForbiddenError'
+    422:
+        $ref: '#/components/responses/UnprocessableEntityError'
+    5xx:
+        $ref: '#/components/responses/ServerError'
