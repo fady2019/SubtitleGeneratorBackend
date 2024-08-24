@@ -1,0 +1,38 @@
+tags:
+    - Edit
+summary: Edit Subtitle Segment
+description: Edit a specific subtitle segment and get the updated version.
+operationId: EditSegment
+parameters:
+    - $ref: '#/components/parameters/SubtitleIdInPath'
+    - $ref: '#/components/parameters/SubtitleSegmentIdInPath'
+requestBody:
+    required: true
+    content:
+        application/json:
+            schema:
+                $ref: '#/components/schemas/EditSubtitleSegment'
+responses:
+    200:
+        description: Success
+        content:
+            application/json:
+                schema:
+                    type: object
+                    properties:
+                        data:
+                            nullable: true
+                            allOf:
+                                - $ref: '#/components/schemas/Segment'
+                        message:
+                            type: string
+    400:
+        $ref: '#/components/responses/BadRequestError'
+    403:
+        $ref: '#/components/responses/ForbiddenError'
+    404:
+        $ref: '#/components/responses/SubtitleNotFound'
+    422:
+        $ref: '#/components/responses/UnprocessableEntityError'
+    5xx:
+        $ref: '#/components/responses/ServerError'

@@ -1,0 +1,38 @@
+tags:
+    - Fetch
+summary: Fetch Subtitle Segments
+description: Get the segments of a subtitle.
+operationId: FetchSegments
+parameters:
+    - $ref: '#/components/parameters/SubtitleIdInPath'
+    - $ref: '#/components/parameters/PaginationPageInQuery'
+    - $ref: '#/components/parameters/PaginationItemsPerPageInQuery'
+responses:
+    200:
+        description: Success
+        content:
+            application/json:
+                schema:
+                    type: object
+                    properties:
+                        data:
+                            type: object
+                            properties:
+                                segments:
+                                    type: array
+                                    items:
+                                        $ref: '#/components/schemas/Segment'
+                                count:
+                                    type: integer
+                                has_next:
+                                    type: boolean
+                        message:
+                            type: string
+    403:
+        $ref: '#/components/responses/ForbiddenError'
+    404:
+        $ref: '#/components/responses/SubtitleNotFound'
+    422:
+        $ref: '#/components/responses/UnprocessableEntityError'
+    5xx:
+        $ref: '#/components/responses/ServerError'

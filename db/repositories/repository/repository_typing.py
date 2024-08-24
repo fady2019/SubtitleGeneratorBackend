@@ -20,6 +20,6 @@ def update_options(options: TOptions, get_default: Callable[[], TOptions]) -> TO
     default = get_default() or {}
 
     if options != None:
-        default.update(options)
+        default.update({k: v for k, v in options.items() if v is not None})
 
     return default

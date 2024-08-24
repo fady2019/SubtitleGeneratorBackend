@@ -26,3 +26,8 @@ class RequestFiles(InputSource):
 class RequestForm(InputSource):
     def read(self):
         return {k: v for k, v in request.form.items()}
+
+
+class RequestArgs(InputSource):
+    def read(self):
+        return {k: v for k, v in request.args.items()}

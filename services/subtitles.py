@@ -8,7 +8,6 @@ import os
 
 from celery_tasks.subtitles import SubtitleTasks
 from db.repositories.subtitle import SubtitleRepository
-from db.repositories.segment import SegmentRepository
 from db.entities.subtitle import SubtitleStatus
 from response.response import ResponseError
 from response.response_messages import ResponseMessage
@@ -24,7 +23,6 @@ MAX_NUMBER_OF_SUBTITLES_PER_USER = int(os.getenv("MAX_NUMBER_OF_SUBTITLES_PER_US
 class SubtitlesService:
     def __init__(self) -> None:
         self.subtitle_repo = SubtitleRepository()
-        self.segment_repo = SegmentRepository()
         self.subtitle_mapper = SubtitleMapper()
 
     #

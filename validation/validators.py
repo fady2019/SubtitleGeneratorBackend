@@ -20,8 +20,32 @@ def valid_string(field_placeholder: str, msg: str = None):
     return Coerce(str, msg=msg or f"the {field_placeholder} should be string")
 
 
+def valid_int(field_placeholder: str, msg: str = None):
+    return Coerce(int, msg=msg or f"the {field_placeholder} should be integer")
+
+
 def valid_length(field_placeholder: str, min: int = None, max: int = None, msg: str = None):
     return Length(min=min, max=max, msg=msg or f"the {field_placeholder} should be between {min} and {max} characters")
+
+
+def not_empty(field_placeholder: str):
+    def validator(value: str):
+        if not str(value.strip()):
+            raise Invalid(f"the {field_placeholder} shouldn't be empty")
+
+        return value
+
+    return validator
+
+
+def positive_num(field_placeholder: str):
+    def validator(value: str):
+        if float(value) <= 0:
+            raise Invalid(f"the {field_placeholder} should be a positive number")
+
+        return value
+
+    return validator
 
 
 def valid_file(field_placeholder: str, supported_mimetypes: list[str] = []):

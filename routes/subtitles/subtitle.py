@@ -1,6 +1,7 @@
 from flask import Blueprint, request, g
 from flasgger import swag_from
 
+from routes.subtitles.segments.segments import segments_blueprint
 from services.subtitles import SubtitlesService
 from response.response import Response
 from response.response_messages import ResponseMessage
@@ -65,3 +66,6 @@ def edit_subtitle(subtitle_id):
 def delete_subtitle(subtitle_id):
     subtitles_service.delete_subtitle(g.user_subtitle)
     return Response(ResponseMessage.SUCCESSFUL_SUBTITLE_DELETION)
+
+
+subtitle_blueprint.register_blueprint(segments_blueprint)

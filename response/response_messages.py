@@ -60,6 +60,8 @@ class ResponseMessage(ResponseMessageBase):
     }
     SUCCESSFUL_SUBTITLE_EDITING = {"msg": "subtitle successfully edited", "status_code": 200}
     SUCCESSFUL_SUBTITLE_DELETION = {"msg": "subtitle successfully deleted", "status_code": 200}
+    SUCCESSFUL_SEGMENTS_FETCHING = {"msg": "segments successfully fetched", "status_code": 200}
+    SUCCESSFUL_SEGMENT_EDITING = {"msg": "segments successfully edited", "status_code": 200}
 
     #
     #

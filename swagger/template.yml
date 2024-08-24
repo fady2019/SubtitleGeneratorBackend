@@ -82,6 +82,12 @@ components:
                 title:
                     type: string
         #
+        EditSubtitleSegment:
+            type: object
+            properties:
+                text:
+                    type: string
+        #
         Subtitle:
             type: object
             properties:
@@ -243,3 +249,21 @@ components:
             required: True
             schema:
                 type: string
+        SubtitleSegmentIdInPath:
+            in: path
+            name: segment_id
+            required: True
+            schema:
+                type: integer
+        PaginationPageInQuery:
+            in: query
+            name: page
+            required: False
+            schema:
+                type: integer
+        PaginationItemsPerPageInQuery:
+            in: query
+            name: items_per_page
+            required: False
+            schema:
+                type: integer
