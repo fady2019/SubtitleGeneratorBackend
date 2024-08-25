@@ -1,4 +1,4 @@
-from voluptuous import Coerce, All, Required, Email, Length, Invalid
+from voluptuous import Coerce, All, Required, Email, Length, Invalid, In
 from werkzeug.datastructures import FileStorage
 from uuid import UUID
 import regex as re
@@ -26,6 +26,10 @@ def valid_int(field_placeholder: str, msg: str = None):
 
 def valid_length(field_placeholder: str, min: int = None, max: int = None, msg: str = None):
     return Length(min=min, max=max, msg=msg or f"the {field_placeholder} should be between {min} and {max} characters")
+
+
+def in_list(field_placeholder: str, list: list, msg: str = None):
+    return In(list, msg=msg or f"the {field_placeholder} should be one of {list}")
 
 
 def not_empty(field_placeholder: str):

@@ -96,3 +96,7 @@ class ResponseMessage(ResponseMessageBase):
     }
     FAILED_EDITING_ACTIVE_SUBTITLE_GENERATION = {"msg": "can't edit active subtitle generation", "status_code": 409}
     FAILED_DELETING_ACTIVE_SUBTITLE_GENERATION = {"msg": "can't delete active subtitle generation", "status_code": 409}
+    FAILED_CREATING_SUBTITLE_FILE_INVALID_STATE = {
+        "msg": "subtitle file creation failed. the subtitle generation might not be complete yet, or there may be no segments available",
+        "status_code": 409,
+    }

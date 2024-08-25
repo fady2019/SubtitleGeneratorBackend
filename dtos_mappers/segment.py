@@ -9,7 +9,7 @@ class SegmentMapper(Mapper[SegmentEntity, SegmentDTO]):
             return None
 
         return SegmentDTO(
-            segment_id=str(entity.segment_id),
+            segment_id=entity.segment_id,
             subtitle_id=str(entity.subtitle_id),
             text=entity.text,
             start=entity.start,

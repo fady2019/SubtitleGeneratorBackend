@@ -267,3 +267,10 @@ components:
             required: False
             schema:
                 type: integer
+        SubtitleFileTypeInQuery:
+            in: query
+            name: file_type
+            required: True
+            schema:
+                type: string
+                enum: ['srt', 'txt', 'vtt']

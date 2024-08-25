@@ -1,0 +1,25 @@
+tags:
+    - Fetch
+summary: Download Subtitle
+description: Download a specific subtitle as a file in different formats.
+operationId: DownloadSubtitle
+parameters:
+    - $ref: '#/components/parameters/SubtitleIdInPath'
+    - $ref: '#/components/parameters/SubtitleFileTypeInQuery'
+responses:
+    200:
+        description: Success
+    403:
+        $ref: '#/components/responses/ForbiddenError'
+    404:
+        $ref: '#/components/responses/SubtitleNotFound'
+    409:
+        description: Conflict (Invalid state. Subtitle generation not complete | No segments)
+        content:
+            application/json:
+                schema:
+                    $ref: '#/components/schemas/Response'
+    422:
+        $ref: '#/components/responses/UnprocessableEntityError'
+    5xx:
+        $ref: '#/components/responses/ServerError'

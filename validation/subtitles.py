@@ -9,6 +9,7 @@ from validation.validators import (
     subtitle_title_validator,
     not_empty,
     valid_int,
+    in_list,
 )
 
 
@@ -25,6 +26,10 @@ EditSubtitleSchema = Schema({Optional("title"): subtitle_title_validator("title"
 SubtileSegmentIdSchema = Schema({required("segment_id", "segment id"): valid_int("segment id")}, extra=ALLOW_EXTRA)
 
 EditSubtitleSegmentSchema = Schema({Optional("text"): All(valid_string("text"), not_empty("text"))})
+
+SubtitleFileTypeSchema = Schema(
+    {required("file_type", "file type"): All(valid_string("file type"), in_list("file type", list=["srt", "txt", "vtt"]))}
+)
 
 
 def subtitle_begin_generation_audio_validator(data):
@@ -49,3 +54,7 @@ def subtitle_segment_id_validator(data):
 
 def edit_subtitle_segment_validator(data):
     validator_executor(EditSubtitleSegmentSchema, data)
+
+
+def subtitle_file_type_validator(data):
+    validator_executor(SubtitleFileTypeSchema, data)
