@@ -97,7 +97,7 @@ class AuthService:
             "emails/reset_password.html",
             **{
                 "user_name": f"{user.first_name} {user.last_name}",
-                "reset_link": f"{CLIENT_HOST_URL}/reset-password/{temp_token.token}",
+                "reset_link": f"{CLIENT_HOST_URL}/auth/reset-password/{temp_token.token}",
                 "link_expiration_date": temp_token.expiration_date,
             },
         )
@@ -149,7 +149,7 @@ class AuthService:
             "emails/verify_email.html",
             **{
                 "user_name": f"{user.first_name} {user.last_name}",
-                "verification_link": f"{CLIENT_HOST_URL}/verify-password/{temp_token.token}",
+                "verification_link": f"{CLIENT_HOST_URL}/auth/verify-email/{temp_token.token}",
                 "link_expiration_date": temp_token.expiration_date,
             },
         )
