@@ -12,7 +12,7 @@ from celery_tasks.emails import EmailTasks
 from dtos.subtitle import SubtitleDTO
 from dtos_mappers.subtitle import SubtitleMapper
 from helpers.date import to_datetime, get_duration
-
+from helpers.celery import is_invoked, remove_invoked_task
 
 WHISPER_MODAL = os.getenv("WHISPER_MODAL")
 CLIENT_HOST_URL = os.getenv("CLIENT_HOST_URL")
@@ -27,16 +27,26 @@ class SubtitleTasks:
     @staticmethod
     @shared_task(bind=True)
     def transcribe(self: Task, subtitle: SubtitleDTO, audio_path: str):
+        if is_invoked(self.request.id):
+            remove_invoked_task(self.request.id)
+            raise Exception("invoked")
+
         try:
-            # SAVE THE TASK_ID IN THE SUBTITLE RECORD
-            # IT'S REQUIRED TO TERMINATE THE TASK (IF THE USER WANTS TO)
-            SubtitleTasks.subtitle_repo.update(
-                filter=lambda Subtitle: Subtitle.id == subtitle["id"], new_data={"task_id": self.request.id}
+            # UPDATE SUBTITLE DATA
+            subtitle_entities = SubtitleTasks.subtitle_repo.update(
+                filter=lambda Subtitle: Subtitle.id == subtitle["id"],
+                new_data={
+                    "status": SubtitleStatus.IN_PROGRESS,
+                    "start_date": datetime.datetime.now(),
+                    "task_id": self.request.id,
+                },
             )
+
+            subtitle = SubtitleTasks.subtitle_mapper.to_dto(subtitle_entities[0])
 
             # TRANSCRIBING
             model = whisper.load_model(WHISPER_MODAL)
-            result = model.transcribe(audio_path, fp16=False, word_timestamps=False)
+            result = model.transcribe(audio_path, fp16=False, word_timestamps=True)
 
             subtitle = SubtitleTasks.__update_subtitle_and_save_segments(subtitle["id"], result)
         except Exception as err:
@@ -99,7 +109,8 @@ class SubtitleTasks:
             filter=lambda Subtitle: Subtitle.id == subtitle_id,
             new_data={
                 "status": SubtitleStatus.FAILED,
-                "finish_date": datetime.datetime.now(),
+                "start_date": None,
+                "finish_date": None,
                 "task_id": None,
             },
         )
@@ -123,6 +134,7 @@ class SubtitleTasks:
         user = SubtitleTasks.__get_user(subtitle["user_id"])
 
         # PREPARE EMAIL TEMPLATE
+        creation_date = to_datetime(subtitle["created_at"])
         start_date = to_datetime(subtitle["start_date"])
         finish_date = to_datetime(subtitle["finish_date"])
 
@@ -131,7 +143,9 @@ class SubtitleTasks:
             **{
                 "user_name": f"{user.first_name} {user.last_name}",
                 "subtitle_title": subtitle["title"],
+                "creation_date": creation_date,
                 "start_date": start_date,
+                "finish_date": finish_date,
                 "generation_time": get_duration(finish_date - start_date),
                 "language": subtitle["language"],
                 "subtitle_link": f"{CLIENT_HOST_URL}/subtitles/{subtitle["id"]}",
@@ -156,7 +170,7 @@ class SubtitleTasks:
             **{
                 "user_name": f"{user.first_name} {user.last_name}",
                 "subtitle_title": subtitle["title"],
-                "start_date": to_datetime(subtitle["start_date"]),
+                "creation_date": to_datetime(subtitle["created_at"]),
                 "subtitle_link": f"{CLIENT_HOST_URL}/subtitles/{subtitle["id"]}",
             },
         )

@@ -13,6 +13,8 @@ from response.response import ResponseError
 from response.response_messages import ResponseMessage
 from dtos.subtitle import SubtitleWithTaskIdDTO
 from dtos_mappers.subtitle import SubtitleMapper
+from helpers.celery import mark_task_as_invoked
+
 
 TMP_STORAGE_PATH = os.path.join(*os.getenv("UPLOADED_AUDIOS_TMP_STORAGE_PATH", "tmp").split("/"))
 os.makedirs(TMP_STORAGE_PATH, exist_ok=True)
@@ -67,7 +69,13 @@ class SubtitlesService:
         audio.save(audio_path)
 
         # START EXTRACTING SUBTITLE
-        SubtitleTasks.transcribe.apply_async(args=[subtitle, audio_path])
+        result: AsyncResult = SubtitleTasks.transcribe.apply_async(args=[subtitle, audio_path])
+
+        # SAVE THE TASK_ID IN THE SUBTITLE RECORD
+        # IT'S REQUIRED TO TERMINATE THE TASK (IF THE USER WANTS TO)
+        self.subtitle_repo.update(
+            filter=lambda Subtitle: Subtitle.id == subtitle["id"], new_data={"task_id": result.task_id}
+        )
 
         return subtitle
 
@@ -75,15 +83,18 @@ class SubtitlesService:
     #
 
     def cancel_subtitle_generation(self, subtitle: SubtitleWithTaskIdDTO):
-        if subtitle["status"] != SubtitleStatus.IN_PROGRESS.value:
+        if subtitle["status"] not in [SubtitleStatus.SCHEDULED.value, SubtitleStatus.IN_PROGRESS.value]:
             raise ResponseError(ResponseMessage.FAILED_CANCELING_INACTIVE_SUBTITLE_GENERATION)
 
         result = AsyncResult(subtitle["task_id"])
         result.revoke(terminate=True, signal="SIGKILL")
 
+        if subtitle["status"] == SubtitleStatus.SCHEDULED.value:
+            mark_task_as_invoked(subtitle["task_id"])
+
         self.subtitle_repo.update(
             filter=lambda Subtitle: (Subtitle.id == subtitle["id"]),
-            new_data={"status": SubtitleStatus.CANCELED, "task_id": None},
+            new_data={"status": SubtitleStatus.CANCELED, "task_id": None, "start_date": None},
         )
 
     #
@@ -98,17 +109,21 @@ class SubtitlesService:
         if not os.path.exists(audio_path):
             raise ResponseError(ResponseMessage.FAILED_AUDIO_FILE_NOT_FOUND)
 
-        SubtitleTasks.transcribe.apply_async(args=[subtitle, audio_path])
+        self.subtitle_repo.update(
+            filter=lambda Subtitle: Subtitle.id == subtitle["id"], new_data={"status": SubtitleStatus.SCHEDULED}
+        )
+
+        result: AsyncResult = SubtitleTasks.transcribe.apply_async(args=[subtitle, audio_path])
 
         self.subtitle_repo.update(
-            filter=lambda Subtitle: Subtitle.id == subtitle["id"], new_data={"status": SubtitleStatus.IN_PROGRESS}
+            filter=lambda Subtitle: Subtitle.id == subtitle["id"], new_data={"task_id": result.task_id}
         )
 
     #
     #
 
     def edit_subtitle(self, subtitle: SubtitleWithTaskIdDTO, date: dict):
-        if subtitle["status"] == SubtitleStatus.IN_PROGRESS.value:
+        if subtitle["status"] in [SubtitleStatus.SCHEDULED.value, SubtitleStatus.IN_PROGRESS.value]:
             raise ResponseError(ResponseMessage.FAILED_EDITING_ACTIVE_SUBTITLE_GENERATION)
 
         subtitle_entities = self.subtitle_repo.update(
@@ -122,7 +137,7 @@ class SubtitlesService:
     #
 
     def delete_subtitle(self, subtitle: SubtitleWithTaskIdDTO):
-        if subtitle["status"] == SubtitleStatus.IN_PROGRESS.value:
+        if subtitle["status"] in [SubtitleStatus.SCHEDULED.value, SubtitleStatus.IN_PROGRESS.value]:
             raise ResponseError(ResponseMessage.FAILED_DELETING_ACTIVE_SUBTITLE_GENERATION)
 
         # DELETE RECORD IN DB

@@ -9,8 +9,9 @@ class SubtitleDTO(DTO):
     title: str
     status: SubtitleStatus
     language: str
-    start_date: str
+    start_date: Optional[str]
     finish_date: Optional[str]
+    created_at: str
     user_id: str
 
 

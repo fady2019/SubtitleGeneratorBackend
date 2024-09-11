@@ -97,7 +97,7 @@ components:
                     type: string
                 status:
                     type: string
-                    enum: ['in_progress', 'canceled', 'completed', 'failed']
+                    enum: ['scheduled', 'in_progress', 'canceled', 'completed', 'failed']
                 language:
                     type: string
                     nullable: true

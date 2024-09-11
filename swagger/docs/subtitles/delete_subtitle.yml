@@ -13,7 +13,7 @@ responses:
     404:
         $ref: '#/components/responses/SubtitleNotFound'
     409:
-        description: Conflict (Invalid subtitle status "in_progress")
+        description: Conflict (Invalid subtitle status "scheduled or in_progress")
         content:
             application/json:
                 schema:

@@ -18,7 +18,11 @@
     <br />
     <strong>Language:</strong> {{ language }}
     <br />
+    <strong>Creation Date:</strong> {{ creation_date | format_date("%A, %B %d, %Y at %I:%M %p")}}
+    <br />
     <strong>Start Date:</strong> {{ start_date | format_date("%A, %B %d, %Y at %I:%M %p")}}
+    <br />
+    <strong>Finish Date:</strong> {{ finish_date | format_date("%A, %B %d, %Y at %I:%M %p")}}
     <br />
     <strong>Generation Time:</strong> {{ generation_time }}
     <br />

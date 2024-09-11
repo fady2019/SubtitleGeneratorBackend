@@ -13,8 +13,9 @@ class SubtitleMapper(Mapper[SubtitleEntity, SubtitleDTO]):
             title=entity.title,
             status=entity.status.value,
             language=entity.language,
-            start_date=entity.start_date.isoformat(),
+            start_date=entity.start_date.isoformat() if entity.start_date else None,
             finish_date=entity.finish_date.isoformat() if entity.finish_date else None,
+            created_at=entity.created_at.isoformat(),
             user_id=str(entity.user_id),
         )
 

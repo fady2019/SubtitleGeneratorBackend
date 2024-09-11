@@ -7,7 +7,7 @@ from uuid import UUID
 
 
 class CreateSubtitleEntityDict(CreateEntityDict):
-    title: Optional[str]
+    title: str
     user_id: UUID
 
 
@@ -15,5 +15,6 @@ class UpdateSubtitleEntityDict(UpdateEntityDict):
     title: Optional[str]
     status: Optional[SubtitleStatus]
     language: Optional[str]
+    start_date: Optional[datetime]
     finish_date: Optional[datetime]
     task_id: Optional[UUID]

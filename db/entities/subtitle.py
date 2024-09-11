@@ -7,6 +7,7 @@ from db.utils.entity_to_dict import generate_dict_from_entity
 
 
 class SubtitleStatus(enum.Enum):
+    SCHEDULED = "scheduled"
     IN_PROGRESS = "in_progress"
     COMPLETED = "completed"
     FAILED = "failed"
@@ -16,11 +17,12 @@ class SubtitleStatus(enum.Enum):
 class SubtitleEntity(Base):
     __tablename__ = "subtitles"
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, info={"updatable": False, "excluded": True})
-    title = Column(String(100), info={"updatable": True})
-    status = Column(Enum(SubtitleStatus), nullable=False, default=SubtitleStatus.IN_PROGRESS, info={"excluded": True})
-    language = Column(String(50), nullable=True, info={"excluded": True})
-    start_date = Column(DateTime, nullable=False, default=datetime.datetime.now, info={"updatable": False, "excluded": True})
+    title = Column(String(25), nullable=False, info={"updatable": True})
+    status = Column(Enum(SubtitleStatus), nullable=False, default=SubtitleStatus.SCHEDULED, info={"excluded": True})
+    language = Column(String(25), nullable=True, info={"excluded": True})
+    start_date = Column(DateTime, nullable=True, info={"excluded": True})
     finish_date = Column(DateTime, nullable=True, info={"excluded": True})
+    created_at = Column(DateTime, nullable=False, default=datetime.datetime.now, info={"updatable": False, "excluded": True})
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, info={"updatable": False})
     task_id = Column(UUID(as_uuid=True), nullable=True, info={"excluded": True})
 
@@ -30,4 +32,4 @@ class SubtitleEntity(Base):
 
 Base.metadata.create_all(bind=DB_ENGINE)
 
-generate_dict_from_entity(entity=SubtitleEntity, ignore_if_exist=True)
+generate_dict_from_entity(entity=SubtitleEntity, ignore_if_exist=False)

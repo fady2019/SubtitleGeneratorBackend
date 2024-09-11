@@ -43,6 +43,7 @@ class AppFactorySingleton:
             "broker_url": os.getenv("CELERY_BROKER_URL"),
             "result_backend": os.getenv("CELERY_BACKEND"),
             "task_ignore_result": True,
+            "broker_connection_retry_on_startup": True,
         }
 
         app.extensions["celery"] = create_celery(app)
