@@ -11,7 +11,7 @@ responses:
     403:
         $ref: '#/components/responses/ForbiddenError'
     404:
-        description: Not Found (Subtitle not exist | Audio file not exist)
+        description: Not Found (Subtitle not exist | Subtitle media file not exist)
         content:
             application/json:
                 schema:

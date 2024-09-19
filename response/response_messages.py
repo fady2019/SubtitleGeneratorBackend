@@ -70,6 +70,10 @@ class ResponseMessage(ResponseMessageBase):
     # Failed Responses
     # 400
     FAILED_NOT_EXIST_OR_INVALID_TEMP_TOKEN = {"msg": "invalid or not exist token", "status_code": 400}
+    FAILED_CANT_LOAD_SUBTITLE_MEDIA_FILE = {
+        "msg": "can't load the subtitle media file. please make sure that the file isn't corrupted and try again",
+        "status_code": 400,
+    }
     # 401
     FAILED_INVALID_CREDENTIALS = {"msg": "invalid credentials, please try again with the valid ones", "status_code": 401}
     FAILED_WRONG_CURRENT_PASSWORD = {"msg": "the current password is wrong", "status_code": 401}
@@ -84,7 +88,7 @@ class ResponseMessage(ResponseMessageBase):
     FAILED_USER_NOT_FOUND_WITH_ID = {"msg": "there's no user with the entered id", "status_code": 404}
     FAILED_USER_HAS_NO_SUBTITLE_WITH_ID = {"msg": "you don't have a subtitle with the entered id", "status_code": 404}
     FAILED_SUBTITLE_NOT_FOUND_WITH_ID = {"msg": "there's no a subtitle with the entered id", "status_code": 404}
-    FAILED_AUDIO_FILE_NOT_FOUND = {"msg": "can't find the audio file", "status_code": 404}
+    FAILED_SUBTITLE_MEDIA_FILE_NOT_FOUND = {"msg": "can't find the subtitle media file", "status_code": 404}
     # 409
     FAILED_CANCELING_INACTIVE_SUBTITLE_GENERATION = {
         "msg": "inactive subtitle generation can't be canceled",

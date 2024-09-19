@@ -68,11 +68,11 @@ components:
             type: object
             required:
                 - title
-                - audio
+                - media_file
             properties:
                 title:
                     type: string
-                audio:
+                media_file:
                     type: string
                     format: binary
         #

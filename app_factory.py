@@ -38,7 +38,6 @@ class AppFactorySingleton:
         app.config["MAIL_DEFAULT_SENDER"] = os.getenv("MAIL_SENDER")
         app.config["MAIL_USE_TLS"] = os.getenv("MAIL_USE_TLS", "false") == "true"
         app.config["MAIL_USE_SSL"] = os.getenv("MAIL_USE_SSL", "true") == "true"
-
         app.config["CELERY_CONFIG"] = {
             "broker_url": os.getenv("CELERY_BROKER_URL"),
             "result_backend": os.getenv("CELERY_BACKEND"),
@@ -53,7 +52,13 @@ class AppFactorySingleton:
 
         CORS(
             app,
-            resources={r"/api/*": {"supports_credentials": True, "origins": api_origin_list}},
+            resources={
+                r"/api/*": {
+                    "supports_credentials": True,
+                    "origins": api_origin_list,
+                    "expose_headers": ["Content-Disposition"],
+                }
+            },
         )
 
         AppFactorySingleton.__app = app

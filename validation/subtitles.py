@@ -17,7 +17,9 @@ SubtileIdSchema = Schema(
     {required("subtitle_id", "subtitle id"): All(valid_string("subtitle id"), valid_uuid("subtitle id"))}, extra=ALLOW_EXTRA
 )
 
-SubtitleAudioSchema = Schema({required("audio", "audio"): valid_file("audio", supported_mimetypes=["audio/*"])})
+SubtitleMediaFileSchema = Schema(
+    {required("media_file", "media file"): valid_file("media file", supported_mimetypes=["audio/*", "video/*"])}
+)
 
 SubtileTitleSchema = Schema({required("title", "title"): subtitle_title_validator("title")})
 
@@ -32,8 +34,8 @@ SubtitleFileTypeSchema = Schema(
 )
 
 
-def subtitle_begin_generation_audio_validator(data):
-    validator_executor(SubtitleAudioSchema, data)
+def subtitle_begin_generation_media_file_validator(data):
+    validator_executor(SubtitleMediaFileSchema, data)
 
 
 def subtitle_begin_generation_title_validator(data):

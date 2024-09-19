@@ -4,7 +4,7 @@ warnings.filterwarnings("ignore", category=FutureWarning, message="You are using
 
 from celery.result import AsyncResult
 from werkzeug.datastructures import FileStorage
-import os
+import os, ffmpeg
 
 from celery_tasks.subtitles import SubtitleTasks
 from db.repositories.subtitle import SubtitleRepository
@@ -63,16 +63,14 @@ class SubtitlesService:
         subtitle_entity = self.subtitle_repo.create({"user_id": user_id, "title": data["title"]})
         subtitle = self.subtitle_mapper.to_dto(subtitle_entity)
 
-        # SAVE THE AUDIO FILE
-        audio: FileStorage = data["audio"]
-        audio_path = self.__get_audio_path(subtitle["id"])
-        audio.save(audio_path)
+        # SAVE THE MEDIA FILE AS AUDIO FILE
+        audio_path = self.__save_subtitle_media_file_as_audio(data["media_file"], subtitle["id"])
 
-        # START EXTRACTING SUBTITLE
+        # # START EXTRACTING SUBTITLE
         result: AsyncResult = SubtitleTasks.transcribe.apply_async(args=[subtitle, audio_path])
 
-        # SAVE THE TASK_ID IN THE SUBTITLE RECORD
-        # IT'S REQUIRED TO TERMINATE THE TASK (IF THE USER WANTS TO)
+        # # SAVE THE TASK_ID IN THE SUBTITLE RECORD
+        # # IT'S REQUIRED TO TERMINATE THE TASK (IF THE USER WANTS TO)
         self.subtitle_repo.update(
             filter=lambda Subtitle: Subtitle.id == subtitle["id"], new_data={"task_id": result.task_id}
         )
@@ -107,7 +105,7 @@ class SubtitlesService:
         audio_path = self.__get_audio_path(subtitle["id"])
 
         if not os.path.exists(audio_path):
-            raise ResponseError(ResponseMessage.FAILED_AUDIO_FILE_NOT_FOUND)
+            raise ResponseError(ResponseMessage.FAILED_SUBTITLE_MEDIA_FILE_NOT_FOUND)
 
         self.subtitle_repo.update(
             filter=lambda Subtitle: Subtitle.id == subtitle["id"], new_data={"status": SubtitleStatus.SCHEDULED}
@@ -152,6 +150,26 @@ class SubtitlesService:
     #
     #
     #
+
+    def __save_subtitle_media_file_as_audio(self, media_file: FileStorage, subtitle_id: str):
+        try:
+            audio_path = self.__get_audio_path(subtitle_id)
+            media_file_path = f"{audio_path}__media_file"
+
+            media_file.save(media_file_path)
+
+            ffmpeg.input(media_file_path).output(audio_path, format="wav", acodec="pcm_s16le", ac=1, ar=16000).run()
+
+            return audio_path
+        except Exception as err:
+            print(err)
+            # WHEN FAILING TO SAVE THE FILE REMOVE THE SUBTITLE FROM THE DB
+            self.subtitle_repo.delete(filter=lambda Subtitle: Subtitle.id == subtitle_id)
+
+            raise ResponseError(ResponseMessage.FAILED_CANT_LOAD_SUBTITLE_MEDIA_FILE)
+        finally:
+            if os.path.exists(media_file_path):
+                os.remove(media_file_path)
 
     # PRIVATE
     def __get_audio_path(self, subtitle_id: str):
