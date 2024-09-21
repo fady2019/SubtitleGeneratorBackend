@@ -9,6 +9,7 @@ class SubtitleDTO(DTO):
     title: str
     status: SubtitleStatus
     language: str
+    translate: bool
     start_date: Optional[str]
     finish_date: Optional[str]
     created_at: str

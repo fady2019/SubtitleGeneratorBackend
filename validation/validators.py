@@ -24,6 +24,10 @@ def valid_int(field_placeholder: str, msg: str = None):
     return Coerce(int, msg=msg or f"the {field_placeholder} should be integer")
 
 
+def valid_bool(field_placeholder: str, msg: str = None):
+    return Coerce(bool, msg=msg or f"the {field_placeholder} should be boolean")
+
+
 def valid_length(field_placeholder: str, min: int = None, max: int = None, msg: str = None):
     return Length(min=min, max=max, msg=msg or f"the {field_placeholder} should be between {min} and {max} characters")
 
@@ -213,6 +217,6 @@ def password_validator(field_placeholder: str):
 def subtitle_title_validator(field_placeholder: str):
     return All(
         valid_string(field_placeholder),
-        valid_length(field_placeholder, 1, 100),
+        valid_length(field_placeholder, 1, 25),
         valid_subtitle_title(field_placeholder),
     )

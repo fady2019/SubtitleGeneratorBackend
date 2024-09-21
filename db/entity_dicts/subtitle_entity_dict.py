@@ -1,4 +1,4 @@
-from builtins import str
+from builtins import bool, str
 from datetime import datetime
 from db.entities.subtitle import SubtitleStatus
 from db.entity_dicts.entity_dict import CreateEntityDict, UpdateEntityDict
@@ -8,6 +8,7 @@ from uuid import UUID
 
 class CreateSubtitleEntityDict(CreateEntityDict):
     title: str
+    translate: bool
     user_id: UUID
 
 

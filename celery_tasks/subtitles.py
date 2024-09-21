@@ -46,7 +46,8 @@ class SubtitleTasks:
 
             # TRANSCRIBING
             model = whisper.load_model(WHISPER_MODAL)
-            result = model.transcribe(audio_path, fp16=False, word_timestamps=True)
+            task = "translate" if subtitle["translate"] else "transcribe"
+            result = model.transcribe(audio_path, fp16=False, word_timestamps=True, task=task)
 
             subtitle = SubtitleTasks.__update_subtitle_and_save_segments(subtitle["id"], result)
         except Exception as err:

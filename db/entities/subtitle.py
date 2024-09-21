@@ -1,4 +1,4 @@
-from sqlalchemy import Column, UUID, Enum, String, DateTime, ForeignKey
+from sqlalchemy import Column, UUID, Enum, String, Boolean, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
 import uuid, enum, datetime
 
@@ -20,6 +20,7 @@ class SubtitleEntity(Base):
     title = Column(String(25), nullable=False, info={"updatable": True})
     status = Column(Enum(SubtitleStatus), nullable=False, default=SubtitleStatus.SCHEDULED, info={"excluded": True})
     language = Column(String(25), nullable=True, info={"excluded": True})
+    translate = Column(Boolean, nullable=False, default=False, info={"updatable": False})
     start_date = Column(DateTime, nullable=True, info={"excluded": True})
     finish_date = Column(DateTime, nullable=True, info={"excluded": True})
     created_at = Column(DateTime, nullable=False, default=datetime.datetime.now, info={"updatable": False, "excluded": True})

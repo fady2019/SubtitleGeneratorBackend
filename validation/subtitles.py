@@ -6,6 +6,7 @@ from validation.validators import (
     valid_file,
     valid_string,
     valid_uuid,
+    valid_bool,
     subtitle_title_validator,
     not_empty,
     valid_int,
@@ -21,7 +22,12 @@ SubtitleMediaFileSchema = Schema(
     {required("media_file", "media file"): valid_file("media file", supported_mimetypes=["audio/*", "video/*"])}
 )
 
-SubtileTitleSchema = Schema({required("title", "title"): subtitle_title_validator("title")})
+GenerateSubtileSchema = Schema(
+    {
+        required("title", "title"): subtitle_title_validator("title"),
+        Optional("translate"): valid_bool("translate"),
+    }
+)
 
 EditSubtitleSchema = Schema({Optional("title"): subtitle_title_validator("title")})
 
@@ -38,8 +44,8 @@ def subtitle_begin_generation_media_file_validator(data):
     validator_executor(SubtitleMediaFileSchema, data)
 
 
-def subtitle_begin_generation_title_validator(data):
-    validator_executor(SubtileTitleSchema, data)
+def subtitle_begin_generation_validator(data):
+    validator_executor(GenerateSubtileSchema, data)
 
 
 def subtitle_id_validator(data):
