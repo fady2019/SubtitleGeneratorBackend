@@ -14,6 +14,7 @@ from response.response_messages import ResponseMessage
 from dtos.subtitle import SubtitleWithTaskIdDTO
 from dtos_mappers.subtitle import SubtitleMapper
 from helpers.celery import mark_task_as_invoked
+from helpers.file import delete_file, add_suffix_to_file_name
 
 
 TMP_STORAGE_PATH = os.path.join(*os.getenv("UPLOADED_AUDIOS_TMP_STORAGE_PATH", "tmp").split("/"))
@@ -145,9 +146,7 @@ class SubtitlesService:
 
         # REMOVE AUDIO IF EXISTS
         audio_path = self.__get_audio_path(subtitle["id"])
-
-        if os.path.exists(audio_path):
-            os.remove(audio_path)
+        delete_file(audio_path)
 
     #
     #
@@ -156,11 +155,18 @@ class SubtitlesService:
     def __save_subtitle_media_file_as_audio(self, media_file: FileStorage, subtitle_id: str):
         try:
             audio_path = self.__get_audio_path(subtitle_id)
-            media_file_path = f"{audio_path}__media_file"
+            media_file_path = add_suffix_to_file_name(audio_path, "media_file")
 
+            # SAVE THE FILE
             media_file.save(media_file_path)
 
-            ffmpeg.input(media_file_path).output(audio_path, format="wav", acodec="pcm_s16le", ac=1, ar=16000).run()
+            # COVERT IT TO WAV
+            (
+                ffmpeg.input(media_file_path)
+                .output(audio_path, format="flac", acodec="flac", ar=44100, af="afftdn")
+                .run(overwrite_output=True)
+                # .output(audio_path, format="wav", acodec="pcm_s24le", ac=2, ar=44100, af=FFMPEG_AUDIO_FILTER)
+            )
 
             return audio_path
         except Exception as err:
@@ -170,8 +176,7 @@ class SubtitlesService:
 
             raise ResponseError(ResponseMessage.FAILED_CANT_LOAD_SUBTITLE_MEDIA_FILE)
         finally:
-            if os.path.exists(media_file_path):
-                os.remove(media_file_path)
+            delete_file(media_file_path)
 
     # PRIVATE
     def __get_audio_path(self, subtitle_id: str):

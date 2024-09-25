@@ -13,3 +13,5 @@ celery
 openai-whisper
 numpy<2
 ffmpeg-python
+pydub
+demucs
