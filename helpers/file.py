@@ -1,10 +1,6 @@
 import os, shutil
 
 
-def get_file_name(file_path: str):
-    return os.path.splitext(os.path.basename(file_path))[0]
-
-
 def delete_file(file_path: str | None):
     if not file_path or not os.path.exists(file_path):
         return
@@ -22,8 +18,9 @@ def delete_dir(dir_path: str | None, only_if_empty=True):
         shutil.rmtree(dir_path)
 
 
-def add_suffix_to_file_name(file_path: str, suffix: str, sep: str = "__"):
-    dirname = os.path.dirname(file_path)
-    filename, ext = os.path.splitext(os.path.basename(file_path))
-    new_path = os.path.join(dirname, f"{filename}{sep}{suffix}{ext}")
-    return new_path
+def create_file(dir_path: str, file_name: str = ""):
+    assert type(dir_path) == str
+    assert type(file_name) == str
+
+    os.makedirs(dir_path, exist_ok=True)
+    return os.path.join(dir_path, file_name)

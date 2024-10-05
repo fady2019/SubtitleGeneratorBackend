@@ -2,52 +2,49 @@ from pydub import AudioSegment
 from demucs import separate
 import shlex, os
 
-from helpers.file import get_file_name
+from helpers.file import create_file
 
-DEMUSC_OUT_DIR = os.getenv("DEMUSC_OUT_DIR", "tmp/demucs")
-DEMUSC_MODAL_NAME = os.getenv("DEMUSC_MODAL_NAME", "mdx_extra")
-DEMUSC_STEM_NAME = os.getenv("DEMUSC_STEM_NAME", "vocals")
-
-
-def extract_vocals(audio_path: str):
-    audio_file_name = get_file_name(audio_path)
-    command = f"-o {DEMUSC_OUT_DIR} -n {DEMUSC_MODAL_NAME} --two-stems {DEMUSC_STEM_NAME} {audio_path}"
-    separate.main(shlex.split(command))
-
-    out_path = os.path.join(DEMUSC_OUT_DIR, DEMUSC_MODAL_NAME, audio_file_name)
-    vocals_audio_path = os.path.join(out_path, f"{DEMUSC_STEM_NAME}.wav")
-
-    return out_path, vocals_audio_path
+DEMUCS_OUT_DIR_NAME = os.getenv("DEMUCS_OUT_DIR_NAME", "source_separation")
+DEMUCS_CHUNKS_OUT_DIR_NAME = os.getenv("DEMUCS_CHUNKS_OUT_DIR_NAME", "chunks")
+DEMUCS_VOCALS_FILE_NAME = os.getenv("DEMUCS_VOCALS_FILE_NAME", "vocals")
+DEMUCS_MODAL_NAME = os.getenv("DEMUCS_MODAL_NAME", "htdemucs")
+DEMUCS_STEM_NAME = os.getenv("DEMUCS_STEM_NAME", "vocals")
 
 
-def milliseconds_until_sound_forward(sound: AudioSegment, silence_threshold, chunk_size):
-    # MAKING SURE THAT chunk_size IS GREATER THAN ZERO
-    assert chunk_size > 0
+def extract_vocals(audio_path: str, out_dir: str, only_if_not_exist: bool = True, chunk_size_ms: int = 180000):
+    assert chunk_size_ms > 0
 
-    frame = 0
+    audio: AudioSegment = AudioSegment.from_file(audio_path)
+    vocals_audio = AudioSegment.empty()
 
-    while frame < len(sound) and sound[frame : frame + chunk_size].max_dBFS < silence_threshold:
-        frame += chunk_size
+    main_out_dir = create_file(os.path.join(out_dir, DEMUCS_OUT_DIR_NAME))
+    chunks_dir = create_file(os.path.join(main_out_dir, DEMUCS_CHUNKS_OUT_DIR_NAME))
+    vocals_audio_path = os.path.join(main_out_dir, DEMUCS_VOCALS_FILE_NAME)
 
-    return frame
+    if only_if_not_exist and os.path.exists(vocals_audio_path):
+        return main_out_dir, vocals_audio_path
+
+    for idx, chunk_start in enumerate(range(0, len(audio), chunk_size_ms)):
+        chunk_path = os.path.join(chunks_dir, str(idx))
+
+        if not os.path.exists(chunk_path):
+            chunk = audio[chunk_start : chunk_start + chunk_size_ms]
+            chunk.export(chunk_path, format="flac")
+
+        chunk_demucs_out_dir = os.path.join(main_out_dir, DEMUCS_MODAL_NAME, str(idx))
+        chunk_vocals_audio_path = os.path.join(chunk_demucs_out_dir, f"{DEMUCS_STEM_NAME}.flac")
+
+        if not os.path.exists(chunk_vocals_audio_path):
+            command = f"--flac -o {main_out_dir} -n {DEMUCS_MODAL_NAME} --two-stems {DEMUCS_STEM_NAME} {chunk_path}"
+            separate.main(shlex.split(command))
+
+        vocals_audio += AudioSegment.from_file(chunk_vocals_audio_path)
+
+    vocals_audio.export(vocals_audio_path, format="flac")
+
+    return main_out_dir, vocals_audio_path
 
 
-def milliseconds_until_sound_backward(sound: AudioSegment, silence_threshold, chunk_size):
-    # MAKING SURE THAT chunk_size IS GREATER THAN ZERO
-    assert chunk_size > 0
-
-    frame = len(sound) - chunk_size
-
-    while frame >= 0 and sound[frame : frame + chunk_size].max_dBFS < silence_threshold:
-        frame -= chunk_size
-
-    return frame + chunk_size
-
-
-def trim_silence(audio_path, output_path, output_format="wav", silence_threshold=-30.0, chunk_size=10):
-    audio: AudioSegment = AudioSegment.from_file(audio_path, format="wav")
-    start_trim = milliseconds_until_sound_forward(audio, silence_threshold, chunk_size)
-    end_trim = milliseconds_until_sound_backward(audio, silence_threshold, chunk_size)
-    trimmed = audio[start_trim:end_trim]
-    trimmed.export(output_path, format=output_format)
-    return start_trim, end_trim
+def get_audio_duration(audio_path):
+    audio = AudioSegment.from_file(audio_path)
+    return len(audio)

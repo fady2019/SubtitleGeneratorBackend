@@ -70,10 +70,6 @@ class ResponseMessage(ResponseMessageBase):
     # Failed Responses
     # 400
     FAILED_NOT_EXIST_OR_INVALID_TEMP_TOKEN = {"msg": "invalid or not exist token", "status_code": 400}
-    FAILED_CANT_LOAD_SUBTITLE_MEDIA_FILE = {
-        "msg": "can't load the subtitle media file. please make sure that the file isn't corrupted and try again",
-        "status_code": 400,
-    }
     # 401
     FAILED_INVALID_CREDENTIALS = {"msg": "invalid credentials, please try again with the valid ones", "status_code": 401}
     FAILED_WRONG_CURRENT_PASSWORD = {"msg": "the current password is wrong", "status_code": 401}

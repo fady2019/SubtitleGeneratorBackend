@@ -2,21 +2,20 @@ from flask import render_template
 from sqlalchemy.orm import Session
 from celery import shared_task
 from celery.app.task import Task
-import whisper, os, datetime, ffmpeg
+import whisper, os, datetime
 
 from db.repositories.user import UserRepository
 from db.repositories.subtitle import SubtitleRepository
 from db.repositories.segment import SegmentRepository
 from db.entities.subtitle import SubtitleStatus
 from celery_tasks.emails import EmailTasks
+from celery_tasks.subtitle_media_file import SubtitleMediaFileTasks
 from dtos.subtitle import SubtitleDTO
 from dtos_mappers.subtitle import SubtitleMapper
 from helpers.date import to_datetime, get_duration
-from helpers.celery import is_invoked, remove_invoked_task
-from helpers.file import delete_file
-from helpers.audio import extract_vocals, trim_silence
-from helpers.file import delete_dir, delete_file, add_suffix_to_file_name
-from helpers.subtitle_task import get_subtitle_task_metadata, set_subtitle_task_metadata, remove_subtitle_task_metadata
+from helpers.celery import is_revoked, remove_revoked_task
+from helpers.file import delete_dir
+
 
 WHISPER_MODAL = os.getenv("WHISPER_MODAL")
 CLIENT_HOST_URL = os.getenv("CLIENT_HOST_URL")
@@ -30,45 +29,32 @@ class SubtitleTasks:
 
     @staticmethod
     @shared_task(bind=True)
-    def transcribe(self: Task, subtitle: SubtitleDTO, audio_path: str):
-        if is_invoked(self.request.id):
-            remove_invoked_task(self.request.id)
-            raise Exception("invoked")
+    def begin_subtitle_generation(self: Task, subtitle: SubtitleDTO, media_file_dir: str):
+        if is_revoked(self.request.id):
+            remove_revoked_task(self.request.id)
+            raise Exception("revoked")
 
         try:
-            # UPDATE SUBTITLE DATA
-            subtitle_entities = SubtitleTasks.subtitle_repo.update(
-                filter=lambda Subtitle: Subtitle.id == subtitle["id"],
-                new_data={
-                    "status": SubtitleStatus.IN_PROGRESS,
-                    "start_date": datetime.datetime.now(),
-                    "task_id": self.request.id,
-                },
-            )
+            # UPDATE SUBTITLE INIT STATE
+            subtitle = SubtitleTasks.__update_subtitle_init_state(subtitle["id"], self.request.id)
 
-            subtitle = SubtitleTasks.subtitle_mapper.to_dto(subtitle_entities[0])
+            # CLEAN & OPTIMIZE MEDIA FILE IF NOT ALREADY
+            audio_path, start_trim = SubtitleTasks.__optimize_audio(media_file_dir)
+            start_trim_in_sec = start_trim / 1000.0
 
-            # CLEAN & OPTIMIZE AUTO IF NOT ALREADY
-            start_trim, _ = SubtitleTasks.__optimize_audio(subtitle["id"], audio_path)
+            # GENERATE THE TRANSCRIPTION
+            transcript_result = SubtitleTasks.__transcribe(subtitle, audio_path)
 
-            # TRANSCRIBING
-            model = whisper.load_model(WHISPER_MODAL)
-            task = "translate" if subtitle["translate"] else "transcribe"
-            result = model.transcribe(audio_path, fp16=False, word_timestamps=True, task=task)
-
+            # SAVE THE SUBTITLE SEGMENTS IN DB
             subtitle = SubtitleTasks.__update_subtitle_and_save_segments(
-                subtitle["id"], result, start_trim_in_sec=start_trim / 1000
+                transcript_result, subtitle["id"], start_trim_in_sec
             )
-        except Exception as err:
-            print(type(err), err)
+        except:
             subtitle = SubtitleTasks.__mark_as_failed(subtitle["id"])
             return SubtitleTasks.__send_failure_email(subtitle)
 
-        # DELETE THE AUDIO
-        delete_file(audio_path)
-
-        # DELETE SUBTITLE TASK METADATA
-        remove_subtitle_task_metadata(subtitle["id"])
+        # DELETE THE AUDIOS
+        delete_dir(media_file_dir, only_if_empty=False)
 
         SubtitleTasks.__send_completion_email(subtitle)
 
@@ -78,56 +64,47 @@ class SubtitleTasks:
 
     # PRIVATE
     @staticmethod
-    def __optimize_audio(subtitle_id: str, audio_path: str):
-        metadata = get_subtitle_task_metadata(subtitle_id)
-        opt_metadata = metadata.get("audio_optimization", {}) if metadata else {}
+    def __update_subtitle_init_state(subtitle_id: str, task_id: str):
+        subtitle_entities = SubtitleTasks.subtitle_repo.update(
+            filter=lambda Subtitle: Subtitle.id == subtitle_id,
+            new_data={
+                "status": SubtitleStatus.IN_PROGRESS,
+                "start_date": datetime.datetime.now(),
+                "task_id": task_id,
+            },
+        )
 
-        try:
-            # EXTRACT THE VOCALS
-            if "vocals_extracting" not in opt_metadata:
-                opt_metadata["vocals_extracting"] = extract_vocals(audio_path)
-
-            vocals_audio_dir, vocals_audio_path = opt_metadata["vocals_extracting"]
-
-            # REMOVE SILENCE
-            if "silence_trimming" not in opt_metadata:
-                trimmed_file_path = add_suffix_to_file_name(audio_path, "trimmed")
-                opt_metadata["silence_trimming"] = trimmed_file_path, trim_silence(vocals_audio_path, trimmed_file_path)
-
-            trimmed_file_path, (start_trim, end_trim) = opt_metadata["silence_trimming"]
-
-            # REDUCE AUDIO SAMPLE RATE & MAKE IT SINGLE CHANNEL
-            if "reduced" not in opt_metadata:
-                (
-                    ffmpeg.input(trimmed_file_path)
-                    .output(audio_path, format="wav", acodec="pcm_s16le", ac=1, ar=16000)
-                    .run(overwrite_output=True)
-                )
-
-                opt_metadata["reduced"] = True
-
-            # CLEAR TMP FILES & DIRS
-            delete_dir(vocals_audio_dir, only_if_empty=False)
-            delete_file(trimmed_file_path)
-
-            return start_trim, end_trim
-        except Exception as err:
-            raise err
-        finally:
-            # STORE SUBTITLE AUDIO METADATA
-            set_subtitle_task_metadata(subtitle_id, {"audio_optimization": opt_metadata})
+        return SubtitleTasks.subtitle_mapper.to_dto(subtitle_entities[0])
 
     #
     #
 
     @staticmethod
-    def __update_subtitle_and_save_segments(subtitle_id: str, result: dict, start_trim_in_sec: float = 0):
+    def __optimize_audio(media_file_dir: str):
+        audio_path, start_trim = SubtitleMediaFileTasks.optimize_media_file(media_file_dir)
+        return audio_path, start_trim
+
+    #
+    #
+
+    @staticmethod
+    def __transcribe(subtitle: SubtitleDTO, audio_path: str):
+        # TRANSCRIBING
+        model = whisper.load_model(WHISPER_MODAL)
+        task = "translate" if subtitle["translate"] else "transcribe"
+        return model.transcribe(audio_path, fp16=False, word_timestamps=True, task=task)
+
+    #
+    #
+
+    @staticmethod
+    def __update_subtitle_and_save_segments(transcript_result: dict, subtitle_id: str, start_trim_in_sec: float):
         def cb(session: Session):
             subtitles = SubtitleTasks.subtitle_repo.update(
                 filter=lambda Subtitle: Subtitle.id == subtitle_id,
                 new_data={
                     "status": SubtitleStatus.COMPLETED,
-                    "language": result["language"],
+                    "language": transcript_result["language"],
                     "finish_date": datetime.datetime.now(),
                     "task_id": None,
                 },
@@ -136,7 +113,7 @@ class SubtitleTasks:
 
             segments_data = []
 
-            for segment in result["segments"]:
+            for segment in transcript_result["segments"]:
                 segments_data.append(
                     {
                         "segment_id": segment["id"],
@@ -183,6 +160,9 @@ class SubtitleTasks:
             filter=lambda User: User.id == user_id,
             options={"throw_if_not_found": True, "return_first": True},
         )
+
+    #
+    #
 
     @staticmethod
     def __send_completion_email(subtitle: SubtitleDTO):

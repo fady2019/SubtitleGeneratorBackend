@@ -4,7 +4,7 @@ warnings.filterwarnings("ignore", category=FutureWarning, message="You are using
 
 from celery.result import AsyncResult
 from werkzeug.datastructures import FileStorage
-import os, ffmpeg
+import os
 
 from celery_tasks.subtitles import SubtitleTasks
 from db.repositories.subtitle import SubtitleRepository
@@ -13,12 +13,12 @@ from response.response import ResponseError
 from response.response_messages import ResponseMessage
 from dtos.subtitle import SubtitleWithTaskIdDTO
 from dtos_mappers.subtitle import SubtitleMapper
-from helpers.celery import mark_task_as_invoked
-from helpers.file import delete_file, add_suffix_to_file_name
+from helpers.celery import mark_task_as_revoked, revoke_task
+from helpers.file import delete_dir, create_file
 
 
-TMP_STORAGE_PATH = os.path.join(*os.getenv("UPLOADED_AUDIOS_TMP_STORAGE_PATH", "tmp").split("/"))
-os.makedirs(TMP_STORAGE_PATH, exist_ok=True)
+MEDIA_FILES_TMP_STORAGE_PATH = os.path.join(*os.getenv("MEDIA_FILES_TMP_STORAGE_PATH", "tmp").split("/"))
+MEDIA_FILE_NAME = os.getenv("MEDIA_FILE_NAME")
 
 MAX_NUMBER_OF_SUBTITLES_PER_USER = int(os.getenv("MAX_NUMBER_OF_SUBTITLES_PER_USER", 10))
 
@@ -67,10 +67,12 @@ class SubtitlesService:
         subtitle = self.subtitle_mapper.to_dto(subtitle_entity)
 
         # SAVE THE MEDIA FILE AS AUDIO FILE
-        audio_path = self.__save_subtitle_media_file_as_audio(data["media_file"], subtitle["id"])
+        media_file_dir, media_file_path = self.__get_media_file_path(subtitle["id"])
+        media_file: FileStorage = data["media_file"]
+        media_file.save(media_file_path)
 
         # # START EXTRACTING SUBTITLE
-        result: AsyncResult = SubtitleTasks.transcribe.apply_async(args=[subtitle, audio_path])
+        result: AsyncResult = SubtitleTasks.begin_subtitle_generation.apply_async(args=[subtitle, media_file_dir])
 
         # # SAVE THE TASK_ID IN THE SUBTITLE RECORD
         # # IT'S REQUIRED TO TERMINATE THE TASK (IF THE USER WANTS TO)
@@ -87,11 +89,10 @@ class SubtitlesService:
         if subtitle["status"] not in [SubtitleStatus.SCHEDULED.value, SubtitleStatus.IN_PROGRESS.value]:
             raise ResponseError(ResponseMessage.FAILED_CANCELING_INACTIVE_SUBTITLE_GENERATION)
 
-        result = AsyncResult(subtitle["task_id"])
-        result.revoke(terminate=True, signal="SIGKILL")
+        revoke_task(subtitle["task_id"])
 
         if subtitle["status"] == SubtitleStatus.SCHEDULED.value:
-            mark_task_as_invoked(subtitle["task_id"])
+            mark_task_as_revoked(subtitle["task_id"])
 
         self.subtitle_repo.update(
             filter=lambda Subtitle: (Subtitle.id == subtitle["id"]),
@@ -105,16 +106,16 @@ class SubtitlesService:
         if subtitle["status"] not in [SubtitleStatus.FAILED.value, SubtitleStatus.CANCELED.value]:
             raise ResponseError(ResponseMessage.FAILED_SUBTITLE_REGENERATION_INVALID_STATUS)
 
-        audio_path = self.__get_audio_path(subtitle["id"])
+        media_file_dir, _ = self.__get_media_file_path(subtitle["id"])
 
-        if not os.path.exists(audio_path):
+        if not os.path.exists(media_file_dir):
             raise ResponseError(ResponseMessage.FAILED_SUBTITLE_MEDIA_FILE_NOT_FOUND)
 
         self.subtitle_repo.update(
             filter=lambda Subtitle: Subtitle.id == subtitle["id"], new_data={"status": SubtitleStatus.SCHEDULED}
         )
 
-        result: AsyncResult = SubtitleTasks.transcribe.apply_async(args=[subtitle, audio_path])
+        result: AsyncResult = SubtitleTasks.begin_subtitle_generation.apply_async(args=[subtitle, media_file_dir])
 
         self.subtitle_repo.update(
             filter=lambda Subtitle: Subtitle.id == subtitle["id"], new_data={"task_id": result.task_id}
@@ -144,40 +145,15 @@ class SubtitlesService:
         # DELETE RECORD IN DB
         self.subtitle_repo.delete(filter=lambda Subtitle: Subtitle.id == subtitle["id"])
 
-        # REMOVE AUDIO IF EXISTS
-        audio_path = self.__get_audio_path(subtitle["id"])
-        delete_file(audio_path)
+        # REMOVE MEDIA FILE DIR
+        media_file_dir, _ = self.__get_media_file_path(subtitle["id"])
+        delete_dir(media_file_dir, only_if_empty=False)
 
     #
     #
     #
-
-    def __save_subtitle_media_file_as_audio(self, media_file: FileStorage, subtitle_id: str):
-        try:
-            audio_path = self.__get_audio_path(subtitle_id)
-            media_file_path = add_suffix_to_file_name(audio_path, "media_file")
-
-            # SAVE THE FILE
-            media_file.save(media_file_path)
-
-            # COVERT IT TO WAV
-            (
-                ffmpeg.input(media_file_path)
-                .output(audio_path, format="flac", acodec="flac", ar=44100, af="afftdn")
-                .run(overwrite_output=True)
-                # .output(audio_path, format="wav", acodec="pcm_s24le", ac=2, ar=44100, af=FFMPEG_AUDIO_FILTER)
-            )
-
-            return audio_path
-        except Exception as err:
-            print(err)
-            # WHEN FAILING TO SAVE THE FILE REMOVE THE SUBTITLE FROM THE DB
-            self.subtitle_repo.delete(filter=lambda Subtitle: Subtitle.id == subtitle_id)
-
-            raise ResponseError(ResponseMessage.FAILED_CANT_LOAD_SUBTITLE_MEDIA_FILE)
-        finally:
-            delete_file(media_file_path)
 
     # PRIVATE
-    def __get_audio_path(self, subtitle_id: str):
-        return os.path.join(TMP_STORAGE_PATH, f"{subtitle_id}")
+    def __get_media_file_path(self, subtitle_id: str):
+        media_file_dir = os.path.join(MEDIA_FILES_TMP_STORAGE_PATH, subtitle_id)
+        return media_file_dir, create_file(media_file_dir, MEDIA_FILE_NAME)
