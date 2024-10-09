@@ -15,3 +15,7 @@ numpy<2
 ffmpeg-python
 pydub
 demucs
+polyglot
+pyicu 
+pycld2 
+morfessor

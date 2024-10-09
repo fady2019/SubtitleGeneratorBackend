@@ -2,7 +2,8 @@ from flask import render_template
 from sqlalchemy.orm import Session
 from celery import shared_task
 from celery.app.task import Task
-import whisper, os, datetime
+from polyglot.text import Text, Sentence
+import whisper, os, datetime, math
 
 from db.repositories.user import UserRepository
 from db.repositories.subtitle import SubtitleRepository
@@ -98,6 +99,35 @@ class SubtitleTasks:
     #
 
     @staticmethod
+    def __divide_sentence(sentence: Sentence, max_len_per_sentence: int = 150):
+        words = sentence.split(sep=" ")
+
+        # MAKING SURE THAT max_len_per_sentence NOT LESS THAN THE LENGTH OF THE LONGEST WORD
+        max_len_per_sentence = max(max_len_per_sentence, max(len(word) for word in words))
+
+        # FINDING THE BALANCED SENTENCE LENGTH
+        chars_count = len(sentence)
+        min_sentences_count = int(math.ceil(chars_count / max_len_per_sentence))
+        balanced_sentence_len = int(math.ceil(chars_count / min_sentences_count))
+
+        sub_sentence_word_list = [[[], 0]]
+
+        for idx, word in enumerate(words):
+            first_word = len(sub_sentence_word_list[-1][0]) == 0
+            chars_count = len(word) + (0 if first_word else 1)
+
+            if idx != len(words) - 1 and sub_sentence_word_list[-1][1] + chars_count > balanced_sentence_len:
+                sub_sentence_word_list.append([[], 0])
+
+            sub_sentence_word_list[-1][0].append(word)
+            sub_sentence_word_list[-1][1] += chars_count
+
+        return [(" ".join(sentence_words), len(sentence_words)) for (sentence_words, _) in sub_sentence_word_list]
+
+    #
+    #
+
+    @staticmethod
     def __update_subtitle_and_save_segments(transcript_result: dict, subtitle_id: str, start_trim_in_sec: float):
         def cb(session: Session):
             subtitles = SubtitleTasks.subtitle_repo.update(
@@ -111,18 +141,36 @@ class SubtitleTasks:
                 options={"session": session},
             )
 
-            segments_data = []
+            # EXTRACT EACH WORD WITH ITS START & END TIME
+            words: list[tuple[str, float, float]] = []  # word, start_time, end_time
 
             for segment in transcript_result["segments"]:
-                segments_data.append(
-                    {
-                        "segment_id": segment["id"],
-                        "subtitle_id": subtitle_id,
-                        "start": segment["start"] + start_trim_in_sec,
-                        "end": segment["end"] + start_trim_in_sec,
-                        "text": segment["text"].strip(),
-                    }
-                )
+                for word_info in segment["words"]:
+                    word: str = word_info["word"].strip()
+                    words.append((word, word_info["start"], word_info["end"]))
+
+            # DIVIDE THE TEXT INTO SMALL SENTENCES (SEGMENTS)
+            text = Text(transcript_result["text"])
+            sentences: list[Sentence] = text.sentences
+            segments_data = []
+            word_idx = 0
+
+            for sentence in sentences:
+                for sub_sentence, words_count in SubtitleTasks.__divide_sentence(sentence):
+                    _, start_time, _ = words[word_idx]
+                    _, _, end_time = words[word_idx + words_count - 1]
+
+                    segments_data.append(
+                        {
+                            "segment_id": len(segments_data),
+                            "subtitle_id": subtitle_id,
+                            "start": start_time + start_trim_in_sec,
+                            "end": end_time + start_trim_in_sec,
+                            "text": str(sub_sentence.strip()),
+                        }
+                    )
+
+                    word_idx += words_count
 
             SubtitleTasks.segment_repo.create(segments_data, options={"session": session})
 
