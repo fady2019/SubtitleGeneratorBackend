@@ -31,9 +31,12 @@ class SubtitleMediaFileTasks:
             start_trim = get_audio_duration(audio_file_path) - get_audio_duration(trimmed_audio_file_path)
 
             # REDUCE AUDIO SAMPLE RATE
-            SubtitleMediaFileTasks.__reduce_audio_simple_rate(trimmed_audio_file_path, optimized_audio_file_path)
+            prepended_silence_duration = 1000  # 1 sec
+            SubtitleMediaFileTasks.__reduce_audio_simple_rate(
+                trimmed_audio_file_path, optimized_audio_file_path, prepended_silence_duration
+            )
 
-            return optimized_audio_file_path, start_trim
+            return optimized_audio_file_path, start_trim - prepended_silence_duration
         except Exception as err:
             raise err
 
@@ -62,11 +65,12 @@ class SubtitleMediaFileTasks:
     #
     #
 
-    def __reduce_audio_simple_rate(input_path: str, output_path: str):
+    def __reduce_audio_simple_rate(input_path: str, output_path: str, prepended_silence_duration_in_ms: int):
         try:
             if not os.path.exists(output_path):
-                silence_duration = 1  # 1 sec
-                silent_audio = ffmpeg.input("anullsrc=r=44100:cl=stereo", f="lavfi", t=silence_duration)
+                silent_audio = ffmpeg.input(
+                    "anullsrc=r=44100:cl=stereo", f="lavfi", t=prepended_silence_duration_in_ms / 1000.0
+                )
                 original_audio = ffmpeg.input(input_path)
 
                 ffmpeg.concat(silent_audio, original_audio, v=0, a=1).output(output_path, format="flac", ar=16000).run()
