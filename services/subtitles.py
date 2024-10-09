@@ -33,7 +33,9 @@ class SubtitlesService:
     #
 
     def fetch_subtitles(self, user_id: str):
-        subtitle_entities = self.subtitle_repo.find(filter=lambda Subtitle: Subtitle.user_id == user_id)
+        subtitle_entities = self.subtitle_repo.find(
+            filter=lambda Subtitle: Subtitle.user_id == user_id, order_by=lambda Subtitle: Subtitle.created_at.asc()
+        )
         return self.subtitle_mapper.to_dtos(subtitle_entities)
 
     #
