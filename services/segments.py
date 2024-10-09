@@ -48,7 +48,10 @@ class SegmentsService:
         segment_entities = []
 
         if subtitle["status"] == SubtitleStatus.COMPLETED.value:
-            segment_entities = self.segment_repo.find(filter=lambda Segment: Segment.subtitle_id == subtitle["id"])
+            segment_entities = self.segment_repo.find(
+                filter=lambda Segment: Segment.subtitle_id == subtitle["id"],
+                order_by=lambda Segment: Segment.segment_id.asc(),
+            )
 
         if not len(segment_entities):
             raise ResponseError(ResponseMessage.FAILED_CREATING_SUBTITLE_FILE_INVALID_STATE)
