@@ -95,9 +95,9 @@ def request_email_verification(user_id: str):
     already_verified = auth_service.request_email_verification(user_id)
 
     if already_verified:
-        return Response(ResponseMessage.SUCCESSFUL_REQUEST_EMAIL_VERIFICATION_ALREADY_VERIFIED)
+        return Response(ResponseMessage.SUCCESSFUL_REQUEST_EMAIL_VERIFICATION_ALREADY_VERIFIED, {"already_verified": True})
 
-    return Response(ResponseMessage.SUCCESSFUL_REQUEST_EMAIL_VERIFICATION)
+    return Response(ResponseMessage.SUCCESSFUL_REQUEST_EMAIL_VERIFICATION, {"already_verified": False})
 
 
 @swag_from(get_swagger_doc_path("auth", "verify_email.yml"))
