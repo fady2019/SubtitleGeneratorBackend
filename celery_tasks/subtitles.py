@@ -100,7 +100,7 @@ class SubtitleTasks:
 
     @staticmethod
     def __divide_sentence(sentence: Sentence, max_len_per_sentence: int = 150):
-        words = sentence.split(sep=" ")
+        words = [word.strip() for word in sentence.split(sep=" ")]
 
         # MAKING SURE THAT max_len_per_sentence NOT LESS THAN THE LENGTH OF THE LONGEST WORD
         max_len_per_sentence = max(max_len_per_sentence, max(len(word) for word in words))
@@ -166,7 +166,7 @@ class SubtitleTasks:
                             "subtitle_id": subtitle_id,
                             "start": start_time + start_trim_in_sec,
                             "end": end_time + start_trim_in_sec,
-                            "text": str(sub_sentence.strip()),
+                            "text": sub_sentence,
                         }
                     )
 

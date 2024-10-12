@@ -41,7 +41,7 @@ class SegmentsService:
     def edit_segment(self, subtitle_id: str, segment_id: int, data: dict):
         segment_entities = self.segment_repo.update(
             filter=lambda Segment: (Segment.subtitle_id == subtitle_id) & (Segment.segment_id == segment_id),
-            new_data={"text": data["text"]},
+            new_data={"text": str.strip(data["text"])},
         )
 
         return self.segment_mapper.to_dto(segment_entities[0] if segment_entities else None)

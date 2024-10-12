@@ -29,6 +29,11 @@ class AuthService:
 
     def signup(self, data: dict):
         data["password"] = generate_password_hash(data["password"])
+        data["email"] = str.strip(data["email"])
+        data["username"] = str.strip(data["username"])
+        data["first_name"] = str.strip(data["first_name"])
+        data["last_name"] = str.strip(data["last_name"])
+
         user = self.user_repo.create(data)
         self.request_email_verification(user.id)
         return UserMapper().to_dto(user)
@@ -37,7 +42,7 @@ class AuthService:
     #
 
     def login(self, data: dict):
-        username_or_email, password = data["username_or_email"], data["password"]
+        username_or_email, password = str.strip(data["username_or_email"]), data["password"]
 
         user = self.user_repo.find(
             filter=lambda User: User.email.ilike(username_or_email) | User.username.ilike(username_or_email),
@@ -81,6 +86,8 @@ class AuthService:
     #
 
     def request_password_reset(self, email: str):
+        email = str.strip(email)
+
         # get user data
         user = self.user_repo.find(
             filter=lambda User: User.email.ilike(email),

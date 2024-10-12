@@ -64,7 +64,7 @@ class SubtitlesService:
             )
 
         subtitle_entity = self.subtitle_repo.create(
-            {"user_id": user_id, "title": data["title"], "translate": data["translate"]}
+            {"user_id": user_id, "title": str.strip(data["title"]), "translate": data["translate"]}
         )
         subtitle = self.subtitle_mapper.to_dto(subtitle_entity)
 
@@ -132,7 +132,7 @@ class SubtitlesService:
 
         subtitle_entities = self.subtitle_repo.update(
             filter=lambda Subtitle: Subtitle.id == subtitle["id"],
-            new_data={"title": date["title"]},
+            new_data={"title": str.strip(date["title"])},
         )
 
         return self.subtitle_mapper.to_dto(subtitle_entities[0] if subtitle_entities else None)
