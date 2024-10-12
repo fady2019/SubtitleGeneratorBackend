@@ -267,6 +267,12 @@ components:
             required: False
             schema:
                 type: integer
+        SegmentSearch:
+            in: query
+            name: segment_search
+            required: False
+            schema:
+                type: string
         SubtitleFileTypeInQuery:
             in: query
             name: file_type

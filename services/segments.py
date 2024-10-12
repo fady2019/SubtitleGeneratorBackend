@@ -1,3 +1,5 @@
+from typing import TypedDict, Optional
+
 from db.entities.subtitle import SubtitleStatus
 from db.repositories.segment import SegmentRepository
 from dtos_mappers.segment import SegmentMapper
@@ -17,11 +19,14 @@ class SegmentsService:
     #
     #
 
-    def fetch_segments(self, subtitle_id: str, page: int | str | None, items_per_page: int | str | None):
+    def fetch_segments(self, subtitle_id: str, options: dict = {}):
         segment_entities, count, has_next = self.segment_repo.find_with_pagination(
-            filter=lambda Segment: Segment.subtitle_id == subtitle_id,
+            filter=lambda Segment: (
+                (Segment.subtitle_id == subtitle_id)
+                & (Segment.text.icontains(options.get("segment_search", ""), autoescape=True))
+            ),
             order_by=lambda Segment: Segment.segment_id.asc(),
-            options={"page": page, "items_per_page": items_per_page},
+            options={"page": options.get("page"), "items_per_page": options.get("items_per_page")},
         )
 
         return {

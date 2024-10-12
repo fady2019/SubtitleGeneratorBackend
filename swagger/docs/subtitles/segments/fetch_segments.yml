@@ -7,6 +7,7 @@ parameters:
     - $ref: '#/components/parameters/SubtitleIdInPath'
     - $ref: '#/components/parameters/PaginationPageInQuery'
     - $ref: '#/components/parameters/PaginationItemsPerPageInQuery'
+    - $ref: '#/components/parameters/SegmentSearch'
 responses:
     200:
         description: Success

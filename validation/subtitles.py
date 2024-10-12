@@ -12,6 +12,7 @@ from validation.validators import (
     valid_int,
     in_list,
 )
+from validation.pagination import PaginationSchema
 
 
 SubtileIdSchema = Schema(
@@ -38,6 +39,8 @@ EditSubtitleSegmentSchema = Schema({Optional("text"): All(valid_string("text"), 
 SubtitleFileTypeSchema = Schema(
     {required("file_type", "file type"): All(valid_string("file type"), in_list("file type", list=["srt", "txt", "vtt"]))}
 )
+
+FetchSegmentSchema = Schema({**PaginationSchema.schema, Optional("segment_search"): valid_string("segment search")})
 
 
 def subtitle_begin_generation_media_file_validator(data):
@@ -66,3 +69,7 @@ def edit_subtitle_segment_validator(data):
 
 def subtitle_file_type_validator(data):
     validator_executor(SubtitleFileTypeSchema, data)
+
+
+def fetch_segments_validator(data):
+    validator_executor(FetchSegmentSchema, data)
