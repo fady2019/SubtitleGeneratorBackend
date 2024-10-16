@@ -1,6 +1,7 @@
 from flask import render_template
 from sqlalchemy.orm import Session
 from celery import shared_task
+from celery.signals import task_failure, task_success
 from celery.app.task import Task
 from polyglot.text import Text, Sentence
 import whisper, os, datetime, math
@@ -14,7 +15,7 @@ from celery_tasks.subtitle_media_file import SubtitleMediaFileTasks
 from dtos.subtitle import SubtitleDTO
 from dtos_mappers.subtitle import SubtitleMapper
 from helpers.date import to_datetime, get_duration
-from helpers.celery import is_revoked, remove_revoked_task
+from helpers.celery import is_revoked, remove_revoked_task, revoke_task
 from helpers.file import delete_dir
 
 
@@ -22,42 +23,42 @@ WHISPER_MODAL = os.getenv("WHISPER_MODAL")
 CLIENT_HOST_URL = os.getenv("CLIENT_HOST_URL")
 
 
-class SubtitleTasks:
-    user_repo = UserRepository()
-    subtitle_repo = SubtitleRepository()
-    segment_repo = SegmentRepository()
-    subtitle_mapper = SubtitleMapper()
+user_repo = UserRepository()
+subtitle_repo = SubtitleRepository()
+segment_repo = SegmentRepository()
+subtitle_mapper = SubtitleMapper()
 
+
+class BeginSubtitleGenerationTask(Task):
+    subtitle: SubtitleDTO = None
+    media_file_dir: str = ""
+
+
+class SubtitleTasks:
     @staticmethod
-    @shared_task(bind=True)
-    def begin_subtitle_generation(self: Task, subtitle: SubtitleDTO, media_file_dir: str):
+    @shared_task(bind=True, base=BeginSubtitleGenerationTask)
+    def begin_subtitle_generation(self: BeginSubtitleGenerationTask, subtitle: SubtitleDTO, media_file_dir: str):
         if is_revoked(self.request.id):
             remove_revoked_task(self.request.id)
-            raise Exception("revoked")
+            return revoke_task(self.request.id)
 
-        try:
-            # UPDATE SUBTITLE INIT STATE
-            subtitle = SubtitleTasks.__update_subtitle_init_state(subtitle["id"], self.request.id)
+        self.subtitle = subtitle
+        self.media_file_dir = media_file_dir
 
-            # CLEAN & OPTIMIZE MEDIA FILE IF NOT ALREADY
-            audio_path, start_trim = SubtitleTasks.__optimize_audio(media_file_dir)
-            start_trim_in_sec = start_trim / 1000.0
+        # UPDATE SUBTITLE INIT STATE
+        self.subtitle = SubtitleTasks.__update_subtitle_init_state(self.subtitle["id"], self.request.id)
 
-            # GENERATE THE TRANSCRIPTION
-            transcript_result = SubtitleTasks.__transcribe(subtitle, audio_path)
+        # CLEAN & OPTIMIZE MEDIA FILE IF NOT ALREADY
+        audio_path, start_trim = SubtitleTasks.__optimize_audio(media_file_dir)
+        start_trim_in_sec = start_trim / 1000.0
 
-            # SAVE THE SUBTITLE SEGMENTS IN DB
-            subtitle = SubtitleTasks.__update_subtitle_and_save_segments(
-                transcript_result, subtitle["id"], start_trim_in_sec
-            )
-        except:
-            subtitle = SubtitleTasks.__mark_as_failed(subtitle["id"])
-            return SubtitleTasks.__send_failure_email(subtitle)
+        # GENERATE THE TRANSCRIPTION
+        transcript_result = SubtitleTasks.__transcribe(self.subtitle, audio_path)
 
-        # DELETE THE AUDIOS
-        delete_dir(media_file_dir, only_if_empty=False)
-
-        SubtitleTasks.__send_completion_email(subtitle)
+        # SAVE THE SUBTITLE SEGMENTS IN DB
+        self.subtitle = SubtitleTasks.__update_subtitle_and_save_segments(
+            transcript_result, self.subtitle["id"], start_trim_in_sec
+        )
 
     #
     #
@@ -66,7 +67,7 @@ class SubtitleTasks:
     # PRIVATE
     @staticmethod
     def __update_subtitle_init_state(subtitle_id: str, task_id: str):
-        subtitle_entities = SubtitleTasks.subtitle_repo.update(
+        subtitle_entities = subtitle_repo.update(
             filter=lambda Subtitle: Subtitle.id == subtitle_id,
             new_data={
                 "status": SubtitleStatus.IN_PROGRESS,
@@ -75,7 +76,7 @@ class SubtitleTasks:
             },
         )
 
-        return SubtitleTasks.subtitle_mapper.to_dto(subtitle_entities[0])
+        return subtitle_mapper.to_dto(subtitle_entities[0])
 
     #
     #
@@ -130,7 +131,7 @@ class SubtitleTasks:
     @staticmethod
     def __update_subtitle_and_save_segments(transcript_result: dict, subtitle_id: str, start_trim_in_sec: float):
         def cb(session: Session):
-            subtitles = SubtitleTasks.subtitle_repo.update(
+            subtitles = subtitle_repo.update(
                 filter=lambda Subtitle: Subtitle.id == subtitle_id,
                 new_data={
                     "status": SubtitleStatus.COMPLETED,
@@ -172,20 +173,49 @@ class SubtitleTasks:
 
                     word_idx += words_count
 
-            SubtitleTasks.segment_repo.create(segments_data, options={"session": session})
+            segment_repo.create(segments_data, options={"session": session})
 
             return subtitles[0] if subtitles else None
 
-        subtitle_entity = SubtitleTasks.subtitle_repo.start_transaction(callback=cb)
+        subtitle_entity = subtitle_repo.start_transaction(callback=cb)
 
-        return SubtitleTasks.subtitle_mapper.to_dto(subtitle_entity)
+        return subtitle_mapper.to_dto(subtitle_entity)
+
+
+#
+#
+#
+
+
+class SubtitleTaskSignals:
+    @staticmethod
+    @task_failure.connect(sender=SubtitleTasks.begin_subtitle_generation)
+    def handle_subtitle_generation_failure(**kwargs):
+        subtitle: SubtitleDTO = kwargs.get("args", [None])[0]
+
+        if not subtitle:
+            return
+
+        subtitle = SubtitleTaskSignals.__mark_as_failed(subtitle["id"])
+        SubtitleTaskSignals.__send_failure_email.apply_async(args=[subtitle])
 
     #
     #
 
     @staticmethod
+    @task_success.connect(sender=SubtitleTasks.begin_subtitle_generation)
+    def handle_subtitle_generation_success(sender: BeginSubtitleGenerationTask, **kwargs):
+        # DELETE THE AUDIOS
+        delete_dir(sender.media_file_dir, only_if_empty=False)
+        SubtitleTaskSignals.__send_completion_email.apply_async(args=[sender.subtitle])
+
+    #
+    #
+    #
+
+    @staticmethod
     def __mark_as_failed(subtitle_id: str):
-        subtitles = SubtitleTasks.subtitle_repo.update(
+        subtitles = subtitle_repo.update(
             filter=lambda Subtitle: Subtitle.id == subtitle_id,
             new_data={
                 "status": SubtitleStatus.FAILED,
@@ -197,14 +227,14 @@ class SubtitleTasks:
 
         subtitle_entity = subtitles[0] if subtitles else None
 
-        return SubtitleTasks.subtitle_mapper.to_dto(subtitle_entity)
+        return subtitle_mapper.to_dto(subtitle_entity)
 
     #
     #
 
     @staticmethod
     def __get_user(user_id: str):
-        return SubtitleTasks.user_repo.find(
+        return user_repo.find(
             filter=lambda User: User.id == user_id,
             options={"throw_if_not_found": True, "return_first": True},
         )
@@ -213,8 +243,9 @@ class SubtitleTasks:
     #
 
     @staticmethod
+    @shared_task
     def __send_completion_email(subtitle: SubtitleDTO):
-        user = SubtitleTasks.__get_user(subtitle["user_id"])
+        user = SubtitleTaskSignals.__get_user(subtitle["user_id"])
 
         # PREPARE EMAIL TEMPLATE
         creation_date = to_datetime(subtitle["created_at"])
@@ -244,8 +275,9 @@ class SubtitleTasks:
     #
 
     @staticmethod
+    @shared_task
     def __send_failure_email(subtitle: SubtitleDTO):
-        user = SubtitleTasks.__get_user(subtitle["user_id"])
+        user = SubtitleTaskSignals.__get_user(subtitle["user_id"])
 
         # PREPARE EMAIL TEMPLATE
         email_template = render_template(
