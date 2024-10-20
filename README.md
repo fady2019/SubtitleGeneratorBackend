@@ -267,6 +267,86 @@ This is the backend of CS50x Subtitle Generator. It's my final project for CS50x
 
 </details>
 
+## Environment Variables
+
+<details open>
+
+```.env
+# SERVER
+SERVER_HOST="127.0.0.1"
+SERVER_PORT=5000
+SERVER_DEBUG=true
+
+# CORS
+API_ALLOWED_ORIGINS="http://localhost:5173"
+    # separated by ,
+
+# COOKIE
+COOKIE_HTTP_ONLY="true"
+COOKIE_SAME_SITE="none"
+COOKIE_SECURE="true"
+# COOKIE_DOMAIN=""
+
+# DATABASE
+DATABASE_LOGIN="<db_username>"
+DATABASE_PASSWORD="<db_password>"
+DATABASE_HOST="<db_host>"
+DATABASE_PORT=<db_port>
+DATABASE_NAME="<db_name>"
+
+# JWT
+JWT_AUTH_TOKEN_EXP_IN_HOURS=24
+JWT_AUTH_TOKEN_PUBLIC_KEY="..."
+JWT_AUTH_TOKEN_PRIVATE_KEY="..."
+JWT_AUTH_TOKEN_TOKEN_COOKIE_NAME="token"
+
+# MAIL
+MAIL_SERVER="smtp.gmail.com"
+MAIL_PORT=465
+MAIL_USERNAME="<email>"
+MAIL_PASSWORD="<app_password>"
+MAIL_SENDER="<email>"
+MAIL_USE_TLS="false"
+MAIL_USE_SSL="true"
+
+# CLIENT
+CLIENT_HOST_URL="http://localhost:5173"
+
+# TEMPORARY TOKEN
+TEMP_TOKEN_LENGTH=32
+TEMP_TOKEN_EXP_IN_HOURS=1
+TEMP_TOKEN_CLEANING_CRONJOB_HOUR="*/6"
+    # 1 -> 23
+
+# TEMPORARY FILE PATHS
+MEDIA_FILES_TMP_STORAGE_PATH = "tmp/media_files"
+MEDIA_FILE_NAME = "media_file"
+AUDIO_FILE_NAME = "audio"
+TRIMMED_AUDIO_FILE_NAME = "trimmed"
+OPTIMIZED_AUDIO_FILE_NAME = "optimized"
+
+# CELERY & REDIS
+REDIS_URL="redis://127.0.0.1:6379/0"
+CELERY_BROKER_URL="redis://127.0.0.1:6379/0"
+CELERY_BACKEND="redis://127.0.0.1:6379/0"
+
+# WHISPER
+WHISPER_MODAL="small"
+    # see (https://github.com/openai/whisper?tab=readme-ov-file#available-models-and-languages) for alternatives
+
+# SUBTITLE
+MAX_NUMBER_OF_SUBTITLES_PER_USER=5
+
+# DEMUCS
+DEMUCS_OUT_DIR_NAME="source_separation"
+DEMUCS_CHUNKS_OUT_DIR_NAME="chunks"
+DEMUCS_VOCALS_FILE_NAME="vocals"
+DEMUCS_MODAL_NAME="htdemucs_ft"
+DEMUCS_STEM_NAME="vocals"
+```
+
+</details>
+
 ## Contact
 
 <section>
