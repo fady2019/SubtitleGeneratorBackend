@@ -136,44 +136,72 @@ This is the backend of CS50x Subtitle Generator. It's my final project for CS50x
 
 <details open>
 
-```
+```diff
 .
 ├── README.md
 ├── app.py
+#   >>> the application entry point
 ├── app_factory.py
+#   >>> creates flask and celery apps
 ├── celery_tasks
 │   ├── emails.py
+#   │   >>> celery task for sending emails
 │   ├── subtitle_media_file.py
+#   │   >>> celery task for cleaning/optimizing audio
 │   ├── subtitles.py
+#   │   >>> celery task for generating the subtitle
 │   └── temporary_tokens.py
+#       >>> celery task for removing expired temporary tokens from db
 ├── db
 │   ├── db_config.py
+#   │   >>> setup the db config
 │   ├── entities
 │   │   ├── segment.py
+#   │   │   >>> the "segment" db schema
 │   │   ├── subtitle.py
+#   │   │   >>> the "subtitle" db schema
 │   │   ├── temporary_token.py
+#   │   │   >>> the "temporary token" db schema
 │   │   └── user.py
+#   │       >>> the "user" db schema
+│   ├── utils
+│   │   └── entity_to_dict.py
+#   │       >>> generates typed dict (interface) for db schema dynamically
 │   ├── entity_dicts
 │   │   ├── entity_dict.py
+#   │   │   >>> contains the base typed dicts (interfaces) for the db schema dynamically generated interfaces
 │   │   ├── segment_entity_dict.py
+#   │   │   >>> contains the dynamically generated interfaces for the "segment" schema
 │   │   ├── subtitle_entity_dict.py
+#   │   │   >>> contains the dynamically generated interfaces for the "subtitle" schema
 │   │   ├── temporary_token_entity_dict.py
+#   │   │   >>> contains the dynamically generated interfaces for the "temporary token" schema
 │   │   └── user_entity_dict.py
-│   ├── repositories
-│   │   ├── repository
-│   │   │   ├── create_repository.py
-│   │   │   ├── crud_repository.py
-│   │   │   ├── delete_repository.py
-│   │   │   ├── find_repository.py
-│   │   │   ├── repository.py
-│   │   │   ├── repository_typing.py
-│   │   │   └── update_repository.py
-│   │   ├── segment.py
-│   │   ├── subtitle.py
-│   │   ├── temporary_token.py
-│   │   └── user.py
-│   └── utils
-│       └── entity_to_dict.py
+#   │       >>> contains the dynamically generated interfaces for the "user" schema
+│   └── repositories
+│       ├── repository
+│       │   ├── repository.py
+#       │   │   >>> db repository base class. the main goal behind db repository is reducing code duplication when executing queries
+│       │   ├── repository_typing.py
+#       │   │   >>> contains type for the db repository
+│       │   ├── create_repository.py
+#       │   │   >>> db repository that handles the "create" query
+│       │   ├── delete_repository.py
+#       │   │   >>> db repository that handles the "delete" query
+│       │   ├── find_repository.py
+#       │   │   >>> db repository that handles the "find" query
+│       │   ├── update_repository.py
+#       │   │   >>> db repository that handles the "update" query
+│       │   └── crud_repository.py
+#       │       >>> db repository that inherits all repositories create, find, update, delete
+│       ├── segment.py
+#       │   >>> db repository for the "segment" schema
+│       ├── subtitle.py
+#       │   >>> db repository for the "subtitle" schema
+│       ├── temporary_token.py
+#       │   >>> db repository for the "temporary token" schema
+│       └── user.py
+#           >>> db repository for the "user" schema
 ├── decorators
 │   ├── errors
 │   │   └── app_error_handler.py
