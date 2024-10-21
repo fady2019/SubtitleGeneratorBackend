@@ -164,81 +164,133 @@ This is the backend of CS50x Subtitle Generator. It's my final project for CS50x
 #   │   │   >>> the "temporary token" db schema
 │   │   └── user.py
 #   │       >>> the "user" db schema
-│   ├── utils
+│   ├── repositories
+│   │   ├── repository
+│   │   │   ├── repository.py
+#   │   │   │   >>> db repository base class
+#   │   │   │   >>> the main goal behind db repository is reducing code duplication when executing queries
+│   │   │   ├── repository_typing.py
+#   │   │   │   >>> contains type for the db repository
+│   │   │   ├── create_repository.py
+#   │   │   │   >>> db repository that handles the "create" query
+│   │   │   ├── delete_repository.py
+#   │   │   │   >>> db repository that handles the "delete" query
+│   │   │   ├── find_repository.py
+#   │   │   │   >>> db repository that handles the "find" query
+│   │   │   ├── update_repository.py
+#   │   │   │   >>> db repository that handles the "update" query
+│   │   │   └── crud_repository.py
+#   │   │       >>> db repository that inherits all repositories create, find, update, delete
+│   │   ├── segment.py
+#   │   │   >>> db repository for the "segment" schema
+│   │   ├── subtitle.py
+#   │   │   >>> db repository for the "subtitle" schema
+│   │   ├── temporary_token.py
+#   │   │   >>> db repository for the "temporary token" schema
+│   │   └── user.py
+#   │       >>> db repository for the "user" schema
+│   ├── utils
 │   │   └── entity_to_dict.py
-#   │       >>> generates typed dict (interface) for db schema dynamically
-│   ├── entity_dicts
-│   │   ├── entity_dict.py
-#   │   │   >>> contains the base typed dicts (interfaces) for the db schema dynamically generated interfaces
-│   │   ├── segment_entity_dict.py
-#   │   │   >>> contains the dynamically generated interfaces for the "segment" schema
-│   │   ├── subtitle_entity_dict.py
-#   │   │   >>> contains the dynamically generated interfaces for the "subtitle" schema
-│   │   ├── temporary_token_entity_dict.py
-#   │   │   >>> contains the dynamically generated interfaces for the "temporary token" schema
-│   │   └── user_entity_dict.py
-#   │       >>> contains the dynamically generated interfaces for the "user" schema
-│   └── repositories
-│       ├── repository
-│       │   ├── repository.py
-#       │   │   >>> db repository base class. the main goal behind db repository is reducing code duplication when executing queries
-│       │   ├── repository_typing.py
-#       │   │   >>> contains type for the db repository
-│       │   ├── create_repository.py
-#       │   │   >>> db repository that handles the "create" query
-│       │   ├── delete_repository.py
-#       │   │   >>> db repository that handles the "delete" query
-│       │   ├── find_repository.py
-#       │   │   >>> db repository that handles the "find" query
-│       │   ├── update_repository.py
-#       │   │   >>> db repository that handles the "update" query
-│       │   └── crud_repository.py
-#       │       >>> db repository that inherits all repositories create, find, update, delete
-│       ├── segment.py
-#       │   >>> db repository for the "segment" schema
-│       ├── subtitle.py
-#       │   >>> db repository for the "subtitle" schema
-│       ├── temporary_token.py
-#       │   >>> db repository for the "temporary token" schema
-│       └── user.py
-#           >>> db repository for the "user" schema
+#   │       >>> generates typed dict (interface) for db schema repository methods (dynamically)
+#   │       >>> for example, the create repository method requires data (to create a row in the db),
+#   │       >>> the interface of this data is generated dynamically by this file's functions
+│   └── entity_dicts
+│       ├── entity_dict.py
+#       │   >>> contains the base typed dicts (interfaces) for the db schema dynamically generated interfaces
+│       ├── segment_entity_dict.py
+#       │   >>> contains the dynamically generated interfaces for the "segment" schema
+│       ├── subtitle_entity_dict.py
+#       │   >>> contains the dynamically generated interfaces for the "subtitle" schema
+│       ├── temporary_token_entity_dict.py
+#       │   >>> contains the dynamically generated interfaces for the "temporary token" schema
+│       └── user_entity_dict.py
+#           >>> contains the dynamically generated interfaces for the "user" schema
 ├── decorators
 │   ├── errors
 │   │   └── app_error_handler.py
+#   │       >>> a decorator for catching the error and sending error response to the client
 │   ├── input_validator
 │   │   ├── __init__.py
+#   │   │   >>> a decorator that takes input source and validator
+#   │   │   >>> it executes the given validator on the data comes from the given input source
 │   │   └── input_source.py
+#   │       >>> classes for the user's input sources. where does the input come from? request json, args, files and so on
 │   ├── restrictions
 │   │   └── rate_limit.py
+#   |       >>> a decorator that prevents the user from accessing an endpoint in quick succession
 │   └── security
 │       ├── auth_token.py
+#       │   >>> decorators for handling the request auth token. sign, clear and validate it
 │       └── user_subtitle.py
+#           >>> a decorator for checking that the target user has a specific subtitle
 ├── dtos
 │   ├── dto.py
+#   │   >>> the base interface for app's dtos
+#   │   >>> note: the main benefit of dtos is encapsulating the db query result
+#   │             to pass it through functions or return it as a response to the client
 │   ├── segment.py
+#   │   >>> the segment schema dto(s)
 │   ├── subtitle.py
+#   │   >>> the subtitle schema dto(s)
 │   └── user.py
+#       >>> the user schema dto(s)
 ├── dtos_mappers
 │   ├── mapper.py
+#   │   >>> the base class for the dto mapper
+#   │   >>> the dto mapper converts db query result (db row) to dto object
 │   ├── segment.py
+#   │   >>> coverts segment db row to segment dto
 │   ├── subtitle.py
+#   │   >>> coverts subtitle db row to subtitle dto
 │   └── user.py
+#       >>> coverts user db row to user dto
 ├── helpers
 │   ├── __init__.py
 │   ├── audio.py
+#   │   >>> it contains some helper functions for audio
+#   │   >>> extract_vocals: takes an audio path and generates an audio that contains vocals only
+#   │   >>> get_audio_duration: calculates the duration of an audio
 │   ├── celery.py
+#   │   >>> it contains some helper functions for celery
+#   │   >>> revoke_task: terminal celery task
+#   │   >>> mark_task_as_revoked: marks task as terminated (in redis)
+#   │   >>> remove_revoked_task: deletes marked-terminated task (from redis)
+#   │   >>> is_revoked: checks whether a task marked a terminated or not
 │   ├── cookies.py
+#   │   >>> it contains some helper functions for response cookies
+#   │   >>> set_cookie: stores a cookie in the response
+#   │   >>> delete_cookie: removes a cookie from the response
 │   ├── date.py
+#   │   >>> it contains some helper functions for dates
+#   │   >>> to_datetime: converts value to datetime if possible
+#   │   >>> format_date: changes the date format to the target format
+#   │   >>> add_to_datetime: increases a date by some milliseconds, seconds, minutes, ... so on
+#   │   >>> is_in_future: checks whether a date is in the future or not
+#   │   >>> get_duration: shows how many seconds, minutes, hours and days are in a date
 │   ├── file.py
+#   │   >>> it contains some helper functions for files
+#   │   >>> delete_file: removes a file if exists
+#   │   >>> delete_dir: removes a dir if exists
+#   │   >>> create_file: creates a file if not exists
 │   └── jwt.py
+#       >>> it contains some helper functions for jwt tokens
+#       >>> generate_token_from_payload: takes a payload and generates a jwt token for it
+#       >>> extract_payload_from_token: takes a jwt token and extracts the payload from it
 ├── requirements.txt
+#   >>> the project dependencies
 ├── response
 │   ├── response.py
+#   │   >>> a class that represents the endpoints' response
+#   │   >>> it inherits the FlaskResponse and add some extra detail to it. like, adding message to each response
 │   └── response_messages.py
+#       >>> an enum that contains all response messages and their status code
 ├── routes
 │   ├── api.py
+#   │   >>> the root route for the app's api
 │   ├── auth.py
+#   │   >>> contains the auth endpoints (for more detail, check swagger: /api-docs/?urls.primaryName=Authentication)
 │   └── subtitles
+#       >>> contains the subtile & segment endpoints (for more detail, check swagger: /api-docs/?urls.primaryName=Subtitles)
 │       ├── segments
 │       │   ├── segment.py
 │       │   └── segments.py
@@ -246,14 +298,23 @@ This is the backend of CS50x Subtitle Generator. It's my final project for CS50x
 │       └── subtitles.py
 ├── services
 │   ├── auth.py
+#   │   >>> contains the business logic for the auth endpoints
 │   ├── segments.py
-│   ├── subtitle_file
-│   │   ├── __init__.py
-│   │   └── subtitle_file_creator.py
-│   └── subtitles.py
+#   │   >>> contains the business logic for the segment endpoints
+│   ├── subtitles.py
+#   │   >>> contains the business logic for the subtitle endpoints
+│   └── subtitle_file
+│       ├── __init__.py
+#       │   >>> contains different classes for different subtitle file creators. like txt, srt and vtt
+#       │   >>> each creator creates the file in its own format
+│       └── subtitle_file_creator.py
+#           >>> creates a file from a subtitle segments (the factory)
+│  
 ├── swagger
 │   ├── __init__.py
+#   │   >>> configures swagger for the api's endpoints
 │   ├── docs
+#   │   >>> contains swagger yml files
 │   │   ├── auth
 │   │   │   ├── auto_login.yml
 │   │   │   ├── change_password.yml
@@ -277,8 +338,10 @@ This is the backend of CS50x Subtitle Generator. It's my final project for CS50x
 │   │           ├── edit_segment.yml
 │   │           └── fetch_segments.yml
 │   └── template.yml
+#       >>> contains metadata and shared components for swagger
 ├── templates
 │   └── emails
+#       >>> contains all html templates for email
 │       ├── base.html
 │       ├── reset_password.html
 │       ├── subtitle_generation_completed.html
@@ -286,11 +349,17 @@ This is the backend of CS50x Subtitle Generator. It's my final project for CS50x
 │       └── verify_email.html
 └── validation
     ├── auth.py
+#   │   >>> contains validators for the auth endpoints
     ├── pagination.py
+#   │   >>> contains the pagination validators
     ├── shared.py
+#   │   >>> contains the validator executor, a function the executes a validator schema
     ├── subtitles.py
+#   │   >>> contains validators for the subtitle endpoints
     ├── transformers.py
+#   │   >>> contains input transformers for validation. like trim strings
     └── validators.py
+#       >>> contains shared/general validators
 ```
 
 </details>
