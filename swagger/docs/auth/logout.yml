@@ -6,5 +6,5 @@ operationId: Logout
 responses:
     200:
         $ref: '#/components/responses/NoDataResponse'
-    5xx:
+    500:
         $ref: '#/components/responses/ServerError'

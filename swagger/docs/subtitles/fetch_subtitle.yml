@@ -23,5 +23,5 @@ responses:
         $ref: '#/components/responses/ForbiddenError'
     422:
         $ref: '#/components/responses/UnprocessableEntityError'
-    5xx:
+    500:
         $ref: '#/components/responses/ServerError'

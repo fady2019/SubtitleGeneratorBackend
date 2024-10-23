@@ -26,5 +26,5 @@ responses:
         $ref: '#/components/responses/UnprocessableEntityError'
     429:
         $ref: '#/components/responses/TooManyRequestsError'
-    5xx:
+    500:
         $ref: '#/components/responses/ServerError'

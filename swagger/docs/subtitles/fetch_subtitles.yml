@@ -14,10 +14,10 @@ responses:
                         data:
                             type: array
                             items:
-                                $ref: "#/components/schemas/Subtitle"
+                                $ref: '#/components/schemas/Subtitle'
                         message:
                             type: string
     403:
-        $ref: "#/components/responses/ForbiddenError"
-    5xx:
-        $ref: "#/components/responses/ServerError"
+        $ref: '#/components/responses/ForbiddenError'
+    500:
+        $ref: '#/components/responses/ServerError'

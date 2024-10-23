@@ -18,5 +18,5 @@ responses:
             application/json:
                 schema:
                     $ref: '#/components/schemas/Response'
-    5xx:
+    500:
         $ref: '#/components/responses/ServerError'

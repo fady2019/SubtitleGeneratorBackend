@@ -27,5 +27,5 @@ responses:
                         summary: with no user
                         value:
                             message: 'string'
-    5xx:
+    500:
         $ref: '#/components/responses/ServerError'
