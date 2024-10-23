@@ -132,7 +132,7 @@ This is the backend of CS50x Subtitle Generator. It's my final project for the C
   </kbd>
 </section>
 
-# APIs Documentation
+## APIs Documentation
 
 Check [Swagger APIs Doc](https://fady2019.github.io/SubtitleGeneratorAPIsDoc)
 
