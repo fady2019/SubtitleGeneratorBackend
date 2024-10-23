@@ -4,7 +4,7 @@
 
 ## Description
 
-This is the backend of CS50x Subtitle Generator. It's my final project for CS50x course, offered by Harvard University. CS50x Subtitle Generator is a web application that facilitates the process of generating subtitles with support for multiple languages.
+This is the backend of CS50x Subtitle Generator. It's my final project for the CS50x course, offered by Harvard University. CS50x Subtitle Generator is a web application that facilitates the process of generating subtitles with support for multiple languages. The process is fully asynchronous, allowing users to upload media files without waiting for subtitles to be generated. Once the process is complete, they will receive an email notification.
 
 ## Subtitle Generation Step-By-Step
 
@@ -131,6 +131,17 @@ This is the backend of CS50x Subtitle Generator. It's my final project for CS50x
     </a>
   </kbd>
 </section>
+
+# APIs Documentation
+
+Check [Swagger APIs Doc](https://fady2019.github.io/SubtitleGeneratorAPIsDoc)
+
+**Note:** You can't try the endpoints out in this swagger APIs doc. It's not connected to the project endpoints.
+
+If you want to try them out, you have to use the swagger docs connected with the project endpoints. to do so:
+
+1. host the project locally ([how?](#installation))
+2. visit `http://127.0.0.1:5000/api-docs/`
 
 ## Project Folders
 
