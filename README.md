@@ -27,7 +27,7 @@ You can find the frontend [**here**](https://github.com/fady2019/SubtitleGenerat
     - `sudo apt update` _(update package lists after adding a new repo ("deadsnakes"))_
     - `sudo apt install python3.12` _(install python3.12)_
     - `python3.12 --version` _(ensure that python3.12 installed)_
-3. **Setup PostgreSQL**
+3. **Setup Database** (PostgreSQL)
    - **Locally** <br/>
      To setup PostgreSQL on your local machine (with WSL), watch this [video](https://youtu.be/uq-QtZ5OdRM?si=2pLnHRdZN-C7Hg7o). Here are the commands used in the mentioned video:
      ```
@@ -50,13 +50,13 @@ You can find the frontend [**here**](https://github.com/fady2019/SubtitleGenerat
      > ```
    - **On Cloud** <br/>
      Alternatively, you can use database services such as [Supabase](https://supabase.com/) 
-3. **Clone the Repository**
+4. **Clone the Repository**
     - `git clone https://github.com/fady2019/SubtitleGeneratorBackend.git`
-4. **Setup Virtual Environment**
+5. **Setup Virtual Environment**
     - open the project in ubuntu terminal
     - `python3.12 -m venv .venv` _(create a virtual environment)_
     - `. .venv/bin/activate` _(activate the virtual environment)_
-5. **Setup Packages**
+6. **Setup Packages**
     - `sudo apt install ffmpeg`
     - `pip3.12 install -r requirements.txt` _(install the project dependencies)_
 
