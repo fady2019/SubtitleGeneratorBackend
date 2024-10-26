@@ -27,11 +27,13 @@ You can find the frontend [**here**](https://github.com/fady2019/SubtitleGenerat
     - `sudo apt update` _(update package lists after adding a new repo ("deadsnakes"))_
     - `sudo apt install python3.12` _(install python3.12)_
     - `python3.12 --version` _(ensure that python3.12 installed)_
-3. **Setup Virtual Environment**
+3. **Clone the Repository**
+    - `git clone https://github.com/fady2019/SubtitleGeneratorBackend.git`
+4. **Setup Virtual Environment**
     - open the project in ubuntu terminal
     - `python3.12 -m venv .venv` _(create a virtual environment)_
     - `. .venv/bin/activate` _(activate the virtual environment)_
-4. **Setup Packages**
+5. **Setup Packages**
     - `sudo apt install ffmpeg`
     - `pip3.12 install -r requirements.txt` _(install the project dependencies)_
 
