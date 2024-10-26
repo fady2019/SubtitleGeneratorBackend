@@ -54,6 +54,7 @@ You can find the frontend [**here**](https://github.com/fady2019/SubtitleGenerat
     - `git clone https://github.com/fady2019/SubtitleGeneratorBackend.git`
 5. **Setup Virtual Environment**
     - open the project in ubuntu terminal
+    - `sudo apt install python3.12-venv`
     - `python3.12 -m venv .venv` _(create a virtual environment)_
     - `. .venv/bin/activate` _(activate the virtual environment)_
 6. **Setup Packages**
