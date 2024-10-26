@@ -6,6 +6,8 @@
 
 This is the backend of CS50x Subtitle Generator. It's my final project for the CS50x course, offered by Harvard University. CS50x Subtitle Generator is a web application that facilitates the process of generating subtitles with support for multiple languages. The process is fully asynchronous, allowing users to upload media files without waiting for subtitles to be generated. Once the process is complete, they will receive an email notification.
 
+You can find the frontend [**here**](https://github.com/fady2019/SubtitleGeneratorFrontend).
+
 ## Subtitle Generation Step-By-Step
 
 ![SubtitleGeneratorStepByStep](https://github.com/user-attachments/assets/e1c2bb13-444c-44b3-b8fb-3970e4733494)
