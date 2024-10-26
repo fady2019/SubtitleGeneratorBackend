@@ -28,6 +28,8 @@ You can find the frontend [**here**](https://github.com/fady2019/SubtitleGenerat
     - `sudo apt install python3.12` _(install python3.12)_
     - `python3.12 --version` _(ensure that python3.12 installed)_
 3. **Setup Database** (PostgreSQL)
+   - **On Cloud** <br/>
+     You can use database services such as [Supabase](https://supabase.com/) 
    - **Locally** <br/>
      To setup PostgreSQL on your local machine (with WSL), watch this [video](https://youtu.be/uq-QtZ5OdRM?si=2pLnHRdZN-C7Hg7o). Here are the commands used in the mentioned video:
      ```
@@ -48,21 +50,27 @@ You can find the frontend [**here**](https://github.com/fady2019/SubtitleGenerat
      > 5. \q
      > 6. exit
      > ```
-   - **On Cloud** <br/>
-     Alternatively, you can use database services such as [Supabase](https://supabase.com/) 
-4. **Clone the Repository**
+5. **Clone the Repository**
     - `git clone https://github.com/fady2019/SubtitleGeneratorBackend.git`
-5. **Setup Virtual Environment**
+6. **Setup Virtual Environment**
     - open the project in ubuntu terminal
     - `sudo apt install python3.12-venv`
     - `python3.12 -m venv .venv` _(create a virtual environment)_
     - `. .venv/bin/activate` _(activate the virtual environment)_
-6. **Setup Packages**
-    - `sudo apt install ffmpeg`
-    - `pip3.12 install -r requirements.txt` _(install the project dependencies)_
+7. **Setup Packages & System tools**
+    - System tools _(here are the tools I needed, you might need additional or different ones)_
+      - `sudo apt update`
+      - `sudo apt install pkg-config libicu-dev python3-dev build-essential g++ ffmpeg`
+    - Packages
+      > ℹ️**Note**
+      > 
+      > Ensure the virtual environment is activated before you run the following command
+      - `pip3.12 install -r requirements.txt` _(install the project dependencies)_
 
 ## Usage
-
+> [!NOTE]
+> Ensure the virtual environment is activated before you run the following commands
+> 
 1. **Start Server**
     - `python3.12 app.py`
 2. **Start Celery**
