@@ -50,6 +50,9 @@ You can find the frontend [**here**](https://github.com/fady2019/SubtitleGenerat
      > 5. \q
      > 6. exit
      > ```
+4. **Setup Redis**
+    - `sudo apt update`
+    - `sudo apt install redis-server`
 5. **Clone the Repository**
     - `git clone https://github.com/fady2019/SubtitleGeneratorBackend.git`
 6. **Setup Virtual Environment**
