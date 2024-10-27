@@ -2,6 +2,8 @@
 
 ## Video Demo
 
+[https://youtu.be/71q1JgcqWrE](https://youtu.be/71q1JgcqWrE)
+
 ## Description
 
 This is the backend of CS50x Subtitle Generator. It's my final project for the CS50x course, offered by Harvard University. CS50x Subtitle Generator is a web application that facilitates the process of generating subtitles with support for multiple languages. The process is fully asynchronous, allowing users to upload media files without waiting for subtitles to be generated. Once the process is complete, they will receive an email notification.
