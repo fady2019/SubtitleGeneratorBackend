@@ -175,12 +175,13 @@ You can find the frontend [**here**](https://github.com/fady2019/SubtitleGenerat
 
 Check [Swagger APIs Doc](https://fady2019.github.io/SubtitleGeneratorAPIsDoc)
 
-**Note:** You can't try the endpoints out in this swagger APIs doc. It's not connected to the project endpoints.
-
-If you want to try them out, you have to use the swagger docs connected with the project endpoints. to do so:
-
-1. host the project locally ([how?](#installation))
-2. visit `http://127.0.0.1:5000/api-docs/`
+> [!NOTE]
+> You can't try the endpoints out in this swagger APIs doc. It's not connected to the project endpoints.
+> 
+> If you want to try them out, you have to use the swagger docs connected with the project endpoints. to do so:
+> 1. host the project locally ([how?](#installation))
+> 2. visit `http://127.0.0.1:5000/api-docs/`
+>
 
 ## Project Folders
 
